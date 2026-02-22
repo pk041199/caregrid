@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FormViewerScreen extends StatefulWidget {
   const FormViewerScreen({
@@ -26,7 +28,10 @@ class _FormViewerScreenState extends State<FormViewerScreen> {
 
   final Map<String, TextEditingController> _controllers = {};
   final Map<String, String?> _selectValues = {};
+  final Map<String, String> _draftGenericTexts = {};
+  final Map<String, String?> _draftGenericSelects = {};
   String _followUpDate = '';
+  Timer? _draftTimer;
 
   // ANC-specific
   String _ancVisitType = 'First';
@@ -111,6 +116,7 @@ class _FormViewerScreenState extends State<FormViewerScreen> {
         c.dispose();
       }
     }
+    _draftTimer?.cancel();
     super.dispose();
   }
 
@@ -125,7 +131,9 @@ class _FormViewerScreenState extends State<FormViewerScreen> {
       }
       _form = data;
       _loadAncContext();
+      await _loadDraft();
       setState(() => _loading = false);
+      _startDraftAutoSave();
     } catch (e) {
       setState(() {
         _error = e.toString();
@@ -292,17 +300,32 @@ class _FormViewerScreenState extends State<FormViewerScreen> {
     if (type == 'select') {
       return DropdownButtonFormField<String>(
         initialValue: _selectValues[id],
-        items: options.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-        onChanged: (v) => setState(() => _selectValues[id] = v),
+        items: options
+            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+            .toList(),
+        onChanged: (v) {
+          setState(() => _selectValues[id] = v);
+          _saveDraft();
+        },
         decoration: InputDecoration(labelText: label),
       );
     }
-    final c = _controllers[id] ??= TextEditingController();
+    final c = _controllers[id] ??=
+        TextEditingController(text: _draftGenericTexts[id] ?? '');
+    final isTextArea = type == 'textarea';
     return TextFormField(
       controller: c,
       readOnly: type == 'date',
-      onTap: type == 'date' ? () => _pickDate(c) : null,
+      onTap: type == 'date'
+          ? () async {
+              await _pickDate(c);
+              _saveDraft();
+            }
+          : null,
+      onChanged: (_) => _saveDraft(),
       keyboardType: type == 'number' ? TextInputType.number : TextInputType.text,
+      minLines: isTextArea ? 3 : 1,
+      maxLines: isTextArea ? 6 : 1,
       decoration: InputDecoration(labelText: label),
     );
   }
@@ -373,6 +396,7 @@ class _FormViewerScreenState extends State<FormViewerScreen> {
 
   void _save() {
     if (_isAnc) {
+      _clearDraft();
       Navigator.pop(context, _buildAncResult());
       return;
     }
@@ -391,6 +415,129 @@ class _FormViewerScreenState extends State<FormViewerScreen> {
       'formTitle': (_form?['title'] ?? 'Form').toString(),
       'values': values,
       'followUpDate': resolvedFollow,
+    });
+    _clearDraft();
+  }
+
+  String _draftKey() {
+    final formId = (_form?['id'] ?? widget.assetPath).toString();
+    final entity = (widget.entityLabel ?? 'na').replaceAll(' ', '_');
+    return 'draft_${formId}_$entity';
+  }
+
+  Map<String, dynamic> _captureDraftPayload() {
+    final payload = <String, dynamic>{
+      'followUpDate': _followUpDate,
+      'genericTexts': _controllers.map((k, v) => MapEntry(k, v.text)),
+      'genericSelects': _selectValues,
+    };
+    if (_isAnc) {
+      payload['anc'] = {
+        'visitType': _ancVisitType,
+        'picme': _picme.text,
+        'lmp': _lmp.text,
+        'edd': _edd.text,
+        'gaWeeks': _gaWeeks.text,
+        'trimester': _trimester.text,
+        'totalAncVisits': _totalAncVisits.text,
+        'gpla': _gpla.text,
+        'height': _height.text,
+        'weight': _weight.text,
+        'weightGain': _weightGain.text,
+        'complaints': _complaints.map((e) => e.text).toList(),
+        'coMorbid': _coMorbid.map((e) => e.text).toList(),
+      };
+    }
+    return payload;
+  }
+
+  Future<void> _saveDraft() async {
+    if (_form == null) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_draftKey(), jsonEncode(_captureDraftPayload()));
+    } catch (_) {}
+  }
+
+  Future<void> _loadDraft() async {
+    if (_form == null) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_draftKey()) ?? '';
+      if (raw.trim().isEmpty) return;
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic>) return;
+
+      _followUpDate = (decoded['followUpDate'] ?? '').toString();
+
+      final genericTexts = decoded['genericTexts'];
+      if (genericTexts is Map<String, dynamic>) {
+        _draftGenericTexts.addAll(
+          genericTexts.map((k, v) => MapEntry(k, (v ?? '').toString())),
+        );
+      }
+      final genericSelects = decoded['genericSelects'];
+      if (genericSelects is Map<String, dynamic>) {
+        _draftGenericSelects.addAll(
+          genericSelects.map((k, v) => MapEntry(k, v?.toString())),
+        );
+        _selectValues.addAll(_draftGenericSelects);
+      }
+
+      if (_isAnc) {
+        final anc = decoded['anc'];
+        if (anc is Map<String, dynamic>) {
+          _ancVisitType = (anc['visitType'] ?? _ancVisitType).toString();
+          _picme.text = (anc['picme'] ?? '').toString();
+          _lmp.text = (anc['lmp'] ?? '').toString();
+          _edd.text = (anc['edd'] ?? '').toString();
+          _gaWeeks.text = (anc['gaWeeks'] ?? '').toString();
+          _trimester.text = (anc['trimester'] ?? '').toString();
+          _totalAncVisits.text = (anc['totalAncVisits'] ?? '').toString();
+          _gpla.text = (anc['gpla'] ?? '').toString();
+          _height.text = (anc['height'] ?? '').toString();
+          _weight.text = (anc['weight'] ?? '').toString();
+          _weightGain.text = (anc['weightGain'] ?? '').toString();
+
+          final complaints = (anc['complaints'] as List<dynamic>? ?? const [])
+              .map((e) => e.toString())
+              .toList();
+          if (complaints.isNotEmpty) {
+            for (final c in _complaints) {
+              c.dispose();
+            }
+            _complaints
+              ..clear()
+              ..addAll(complaints.map((e) => TextEditingController(text: e)));
+          }
+
+          final coMorbid = (anc['coMorbid'] as List<dynamic>? ?? const [])
+              .map((e) => e.toString())
+              .toList();
+          if (coMorbid.isNotEmpty) {
+            for (final c in _coMorbid) {
+              c.dispose();
+            }
+            _coMorbid
+              ..clear()
+              ..addAll(coMorbid.map((e) => TextEditingController(text: e)));
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _clearDraft() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_draftKey());
+    } catch (_) {}
+  }
+
+  void _startDraftAutoSave() {
+    _draftTimer?.cancel();
+    _draftTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      _saveDraft();
     });
   }
 

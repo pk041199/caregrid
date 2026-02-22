@@ -48,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<AreaCodeEntry> _areaCodeEntries = [];
   bool _isSyncingAreaCode = false;
   List<Map<String, String>> _grids = [];
+  bool _isDemoSession = false;
 
   static const List<String> _samplingUnits = [
     'Family',
@@ -72,15 +73,24 @@ class _HomeScreenState extends State<HomeScreen> {
       if (!mounted) return;
 
       setState(() {
+        final session = _authService.currentSession;
+        _isDemoSession = (session?.organizationId == 'demo-org') ||
+            ((session?.userId ?? '').toUpperCase().startsWith('DEMO-'));
         _role = role;
         _name = _authService.currentUserName;
         _organizationName = _authService.currentOrganizationName;
-        _isLoggedIn = _authService.currentSession != null;
+        _isLoggedIn = session != null;
         _selectedSamplingUnit ??= _samplingUnits.first;
         _initializeSetupDefaults();
+        _ensureDemoSampleGrid();
         _errorMessage = null;
         _isLoading = false;
       });
+      if (_authService.currentSession == null && mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -209,6 +219,25 @@ class _HomeScreenState extends State<HomeScreen> {
         '${_talukCodeController.text.trim()}-'
         '${_localityCodeController.text.trim()}-'
         '${_areaSuffixCodeController.text.trim()}';
+  }
+
+  void _ensureDemoSampleGrid() {
+    if (_isDemoSession) {
+      final hasSample = _grids.any((g) => g['isSample'] == 'true');
+      if (!hasSample) {
+        _grids.insert(0, {
+          'gridId': 'demo-sample-grid',
+          'samplingUnit': 'Family',
+          'state': 'Demo State',
+          'district': 'Demo District',
+          'taluk': 'Demo Taluk',
+          'areaCode': '01-01-01-001-01',
+          'isSample': 'true',
+        });
+      }
+      return;
+    }
+    _grids.removeWhere((g) => g['isSample'] == 'true');
   }
 
   String _areaSuffixTypeForSamplingUnit() {
@@ -619,97 +648,437 @@ class _HomeScreenState extends State<HomeScreen> {
     return fields;
   }
 
+  List<Widget> _buildLocationFieldsForStepper() {
+    final samplingUnit = _selectedSamplingUnit ?? '';
+    final isFamily = samplingUnit == 'Family';
+    final isPerson = samplingUnit == 'Person';
+    final isAnganwadi = samplingUnit == 'Anganwadi';
+    final isSchool = samplingUnit == 'School';
+    final isWorkPlace = samplingUnit == 'Work Place';
+    final isPhcArea = samplingUnit == 'PHC Area';
+
+    final fields = <Widget>[
+      TextField(
+        controller: _stateController,
+        decoration: const InputDecoration(
+          labelText: 'State',
+          border: OutlineInputBorder(),
+        ),
+        onChanged: (_) => _syncCodeFromNames(),
+      ),
+      const SizedBox(height: 12),
+      TextField(
+        controller: _districtController,
+        decoration: const InputDecoration(
+          labelText: 'District',
+          border: OutlineInputBorder(),
+        ),
+        onChanged: (_) => _syncCodeFromNames(),
+      ),
+      const SizedBox(height: 12),
+      TextField(
+        controller: _talukController,
+        decoration: const InputDecoration(
+          labelText: 'Taluk/Mandal Name',
+          border: OutlineInputBorder(),
+        ),
+        onChanged: (_) => _syncCodeFromNames(),
+      ),
+      const SizedBox(height: 12),
+    ];
+
+    if (isFamily || isPerson || isPhcArea) {
+      fields.addAll([
+        TextField(
+          controller: _phcController,
+          decoration: const InputDecoration(
+            labelText: 'PHC',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 12),
+      ]);
+    }
+
+    if (isFamily) {
+      fields.addAll([
+        TextField(
+          controller: _subcentreController,
+          decoration: const InputDecoration(
+            labelText: 'Subcentre',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _villageController,
+          decoration: const InputDecoration(
+            labelText: 'Village',
+            border: OutlineInputBorder(),
+          ),
+          onChanged: (_) => _syncCodeFromNames(),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _clusterController,
+          decoration: const InputDecoration(
+            labelText: 'Cluster',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 12),
+      ]);
+    }
+
+    if (isSchool || isWorkPlace || isAnganwadi) {
+      fields.addAll([
+        TextField(
+          controller: _cityVillageController,
+          decoration: const InputDecoration(
+            labelText: 'Village/City',
+            border: OutlineInputBorder(),
+          ),
+          onChanged: (_) => _syncCodeFromNames(),
+        ),
+        const SizedBox(height: 12),
+      ]);
+    }
+
+    if (isSchool) {
+      fields.addAll([
+        TextField(
+          controller: _schoolNameController,
+          decoration: const InputDecoration(
+            labelText: 'School Name',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 12),
+      ]);
+    }
+
+    if (isAnganwadi) {
+      fields.addAll([
+        TextField(
+          controller: _anganwadiNameController,
+          decoration: const InputDecoration(
+            labelText: 'Anganwadi Name',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 12),
+      ]);
+    }
+
+    if (isWorkPlace) {
+      fields.addAll([
+        TextField(
+          controller: _workPlaceNameController,
+          decoration: const InputDecoration(
+            labelText: 'Workplace Name',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 12),
+      ]);
+    }
+
+    fields.add(
+      TextField(
+        controller: _dateOfEntryController,
+        readOnly: true,
+        onTap: _pickDateOfEntry,
+        decoration: const InputDecoration(
+          labelText: 'Date of Entry',
+          border: OutlineInputBorder(),
+          suffixIcon: Icon(Icons.calendar_today),
+        ),
+      ),
+    );
+    return fields;
+  }
+
   Future<void> _openStartDataCollectionSetup() async {
     await _refreshAreaCodeEntries();
     if (!mounted) return;
+    int currentStep = 0;
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (dialogContext) {
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-            16,
-            16,
-            16,
-            MediaQuery.of(dialogContext).viewInsets.bottom + 16,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Setup - ${_selectedSamplingUnit ?? ''}',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedSamplingUnit,
-                  decoration: const InputDecoration(
-                    labelText: 'Sampling Unit',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: _samplingUnits
-                      .map(
-                        (unit) => DropdownMenuItem<String>(
-                          value: unit,
-                          child: Text(unit),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value == null) return;
-                    setState(() {
-                      _selectedSamplingUnit = value;
-                      _areaSuffixCodeController.clear();
-                    });
-                    _saveSetupPreferences();
-                  },
-                ),
-                const SizedBox(height: 12),
-                ..._buildSetupFields(),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      if (!_isAreaCodeValidParts()) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Invalid Area Code. Use SS-DD-TT-LLL-XX (Cluster) or SS-DD-TT-LLL-XXX (School/Anganwadi).',
-                            ),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            Widget stepBody;
+            if (currentStep == 0) {
+              stepBody = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DropdownButtonFormField<String>(
+                    initialValue: _selectedSamplingUnit,
+                    decoration: const InputDecoration(
+                      labelText: 'Sampling Unit',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: _samplingUnits
+                        .map(
+                          (unit) => DropdownMenuItem<String>(
+                            value: unit,
+                            child: Text(unit),
                           ),
-                        );
-                        return;
-                      }
-                      final messenger = ScaffoldMessenger.of(context);
-                      await _saveSetupPreferences();
-                      if (!dialogContext.mounted || !mounted) return;
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value == null) return;
                       setState(() {
-                        final gridId = DateTime.now().millisecondsSinceEpoch.toString();
-                        final areaCode = _buildAreaCode();
-                        _grids.add({
-                          'gridId': gridId,
-                          'samplingUnit': _selectedSamplingUnit ?? '',
-                          'state': _stateController.text.trim(),
-                          'district': _districtController.text.trim(),
-                          'taluk': _talukController.text.trim(),
-                          'areaCode': areaCode,
-                        });
+                        _selectedSamplingUnit = value;
+                        _areaSuffixCodeController.clear();
                       });
-                      await _saveSetupPreferences();
-                      Navigator.of(dialogContext).pop();
-                      messenger.showSnackBar(
-                        const SnackBar(content: Text('Set Grid saved.')),
-                      );
+                      setModalState(() {});
                     },
-                    child: const Text('Save Setup'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _dateOfEntryController,
+                    readOnly: true,
+                    onTap: _pickDateOfEntry,
+                    decoration: const InputDecoration(
+                      labelText: 'Date of Entry',
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.calendar_today),
+                    ),
+                  ),
+                ],
+              );
+            } else if (currentStep == 1) {
+              stepBody = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Area Code Preview',
+                      border: OutlineInputBorder(),
+                      helperText:
+                          'Format: SS-DD-TT-LLL-XX (Cluster) or SS-DD-TT-LLL-XXX',
+                    ),
+                    child: Text(
+                      '${_stateCodeController.text}-${_districtCodeController.text}-${_talukCodeController.text}-${_localityCodeController.text}-${_areaSuffixCodeController.text}',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _codePartField(
+                          label: 'S',
+                          maxLength: 2,
+                          controller: _stateCodeController,
+                        ),
+                        const SizedBox(width: 8),
+                        _codePartField(
+                          label: 'D',
+                          maxLength: 2,
+                          controller: _districtCodeController,
+                        ),
+                        const SizedBox(width: 8),
+                        _codePartField(
+                          label: 'T',
+                          maxLength: 2,
+                          controller: _talukCodeController,
+                        ),
+                        const SizedBox(width: 8),
+                        _codePartField(
+                          label: 'L',
+                          maxLength: 3,
+                          controller: _localityCodeController,
+                        ),
+                        const SizedBox(width: 8),
+                        _codePartField(
+                          label: 'X',
+                          maxLength: _areaSuffixLengthForSamplingUnit(),
+                          controller: _areaSuffixCodeController,
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          tooltip: 'Sync',
+                          onPressed: () async {
+                            _normalizeCodeControllers();
+                            await _refreshAreaCodeEntries();
+                            _syncNamesFromCode();
+                            _syncCodeFromNames();
+                            if (!mounted) return;
+                            setState(() {});
+                            setModalState(() {});
+                          },
+                          icon: const Icon(Icons.sync),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const CodeGuideScreen(),
+                              ),
+                            );
+                            _areaCodeEntries = await _areaCodeService.getEntries();
+                            _syncNamesFromCode();
+                            setModalState(() {});
+                          },
+                          child: const Text('Code Guide'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const CodeMasterManagementScreen(),
+                              ),
+                            );
+                            _areaCodeEntries = await _areaCodeService.getEntries();
+                            _syncNamesFromCode();
+                            setModalState(() {});
+                          },
+                          child: const Text('Manage Codes'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${_areaSuffixLabelForSamplingUnit()}: ${_areaSuffixLengthForSamplingUnit()} digits',
+                  ),
+                ],
+              );
+            } else if (currentStep == 2) {
+              stepBody = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: _buildLocationFieldsForStepper(),
+              );
+            } else {
+              stepBody = Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Sampling Unit: ${_selectedSamplingUnit ?? ''}'),
+                      Text('State: ${_stateController.text.trim()}'),
+                      Text('District: ${_districtController.text.trim()}'),
+                      Text('Taluk: ${_talukController.text.trim()}'),
+                      Text('Area Code: ${_buildAreaCode()}'),
+                      Text('Date: ${_dateOfEntryController.text.trim()}'),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
+              );
+            }
+
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                16,
+                16,
+                MediaQuery.of(dialogContext).viewInsets.bottom + 16,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Set Grid - Step ${currentStep + 1}/4',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    LinearProgressIndicator(value: (currentStep + 1) / 4),
+                    const SizedBox(height: 12),
+                    stepBody,
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        if (currentStep > 0)
+                          OutlinedButton(
+                            onPressed: () {
+                              setModalState(() => currentStep -= 1);
+                            },
+                            child: const Text('Back'),
+                          ),
+                        const Spacer(),
+                        if (currentStep < 3)
+                          ElevatedButton(
+                            onPressed: () {
+                              if (currentStep == 1 && !_isAreaCodeValidParts()) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Invalid Area Code. Complete all code parts.',
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+                              setModalState(() => currentStep += 1);
+                            },
+                            child: const Text('Next'),
+                          )
+                        else
+                          ElevatedButton(
+                            onPressed: () async {
+                              if (!_isAreaCodeValidParts()) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Invalid Area Code. Use SS-DD-TT-LLL-XX or SS-DD-TT-LLL-XXX.',
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+                              final messenger = ScaffoldMessenger.of(context);
+                              await _saveSetupPreferences();
+                              if (!dialogContext.mounted || !mounted) return;
+                              setState(() {
+                                final gridId =
+                                    DateTime.now().millisecondsSinceEpoch.toString();
+                                final areaCode = _buildAreaCode();
+                                _grids.add({
+                                  'gridId': gridId,
+                                  'samplingUnit': _selectedSamplingUnit ?? '',
+                                  'state': _stateController.text.trim(),
+                                  'district': _districtController.text.trim(),
+                                  'taluk': _talukController.text.trim(),
+                                  'areaCode': areaCode,
+                                });
+                              });
+                              await _saveSetupPreferences();
+                              Navigator.of(dialogContext).pop();
+                              messenger.showSnackBar(
+                                const SnackBar(content: Text('Set Grid saved.')),
+                              );
+                            },
+                            child: const Text('Save Setup'),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
@@ -738,12 +1107,10 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () async {
                 await _authService.signOut();
                 if (!mounted) return;
-                setState(() {
-                  _isLoggedIn = false;
-                  _role = null;
-                  _name = null;
-                  _organizationName = null;
-                });
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (route) => false,
+                );
               },
             )
           else

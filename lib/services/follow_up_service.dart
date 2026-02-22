@@ -140,16 +140,21 @@ class FollowUpService {
                   ? 'New Born'
                   : formId.toUpperCase());
 
+      final memberName = _firstNonEmptyString(row, const [
+        'member_name',
+        'person_name',
+        'full_name',
+      ]);
+      final scope = _firstNonEmptyString(row, const [
+        'scope',
+        'follow_up_scope',
+      ]);
       return {
         'familyId': _firstNonEmptyString(row, const [
           'family_id',
           'family_code',
         ]),
-        'memberName': _firstNonEmptyString(row, const [
-          'member_name',
-          'person_name',
-          'full_name',
-        ]),
+        'memberName': memberName,
         'formId': formId,
         'formTitle': _firstNonEmptyString(row, const [
           'form_title',
@@ -162,6 +167,22 @@ class FollowUpService {
           'next_visit_date',
           'followup_date',
         ]),
+        'status': _firstNonEmptyString(row, const [
+          'status',
+          'follow_up_status',
+          'plan_status',
+        ]).isEmpty
+            ? 'Planned'
+            : _firstNonEmptyString(row, const [
+                'status',
+                'follow_up_status',
+                'plan_status',
+              ]),
+        'scope': scope.isNotEmpty
+            ? scope
+            : (memberName.toLowerCase() == 'family' || memberName.isEmpty
+                ? 'Family'
+                : 'Individual'),
       };
     }).where((row) => (row['followUpDate'] ?? '').trim().isNotEmpty).toList();
   }

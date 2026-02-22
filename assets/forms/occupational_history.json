@@ -1,0 +1,33 @@
+{
+  "id": "occupational_history",
+  "title": "Occupational History",
+  "version": 1,
+  "followup": {
+    "enabled": true,
+    "defaultCycleDays": 180,
+    "cycleOptionsDays": [90, 180, 365]
+  },
+  "sections": [
+    {
+      "id": "occupation_details",
+      "title": "Occupation Details",
+      "fields": [
+        { "id": "occupation_type", "label": "Occupation Type / Work Setting", "type": "text", "required": false },
+        { "id": "work_hours_per_day", "label": "Work Hours/Day (approx)", "type": "text", "required": false },
+        { "id": "exposure_type", "label": "Exposure (dust/chemical/noise/heat etc.)", "type": "textarea", "required": false },
+        { "id": "ppe_used", "label": "Protective Equipment Used (Yes/No/Sometimes + details)", "type": "text", "required": false }
+      ]
+    },
+    {
+      "id": "work_related_symptoms",
+      "title": "Work-related Symptoms",
+      "fields": [
+        { "id": "respiratory_symptoms", "label": "Respiratory Symptoms (describe)", "type": "text", "required": false },
+        { "id": "skin_symptoms", "label": "Skin Symptoms (describe)", "type": "text", "required": false },
+        { "id": "musculoskeletal_pain", "label": "Musculoskeletal Pain (site/severity)", "type": "text", "required": false },
+        { "id": "next_follow_up_date", "label": "Next Follow-up Date", "type": "date", "required": false },
+        { "id": "notes", "label": "Additional Notes", "type": "textarea", "required": false }
+      ]
+    }
+  ]
+}

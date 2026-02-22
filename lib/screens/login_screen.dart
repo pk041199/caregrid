@@ -180,9 +180,17 @@ class _LoginScreenState extends State<LoginScreen> {
           child: AnimatedBuilder(
             animation: _authController,
             builder: (context, _) {
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                      child: IntrinsicHeight(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
                   const Text(
                     'CareGrid - Public Health Information System',
                     textAlign: TextAlign.center,
@@ -309,7 +317,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                           ],
                         ),
-                ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
               );
             },
           ),

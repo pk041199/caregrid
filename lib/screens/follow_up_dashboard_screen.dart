@@ -8,11 +8,13 @@ class FollowUpDashboardScreen extends StatefulWidget {
     required this.entries,
     required this.samplingUnit,
     required this.setupData,
+    this.onEntriesChanged,
   });
 
   final List<Map<String, String>> entries;
   final String samplingUnit;
   final Map<String, String> setupData;
+  final ValueChanged<List<Map<String, String>>>? onEntriesChanged;
 
   @override
   State<FollowUpDashboardScreen> createState() => _FollowUpDashboardScreenState();
@@ -29,16 +31,37 @@ class _FollowUpDashboardScreenState extends State<FollowUpDashboardScreen> {
   ];
 
   String _selectedFilter = 'All';
+  String _selectedStatus = 'All';
+  String _selectedScope = 'All';
+  static const List<String> _statusFilters = [
+    'All',
+    'Planned',
+    'Completed',
+    'Missed',
+    'Rescheduled',
+  ];
+  static const List<String> _scopeFilters = [
+    'All',
+    'Individual',
+    'Family',
+  ];
   final FollowUpService _followUpService = FollowUpService();
   bool _isLoading = true;
   String? _loadError;
   List<Map<String, String>> _rows = [];
+  int _dbPulledCount = 0;
 
   @override
   void initState() {
     super.initState();
     _rows = _mergeUnique(widget.entries, const <Map<String, String>>[]);
     _loadFromDatabase();
+  }
+
+  void _notifyEntriesChanged() {
+    widget.onEntriesChanged?.call(
+      _rows.map((e) => Map<String, String>.from(e)).toList(),
+    );
   }
 
   Future<void> _loadFromDatabase() async {
@@ -56,13 +79,17 @@ class _FollowUpDashboardScreenState extends State<FollowUpDashboardScreen> {
       if (!mounted) return;
       setState(() {
         _rows = _mergeUnique(widget.entries, dbRows);
+        _dbPulledCount = dbRows.length;
       });
+      _notifyEntriesChanged();
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _loadError = 'Could not pull follow-ups from database. Showing local reminders.';
         _rows = _mergeUnique(widget.entries, const <Map<String, String>>[]);
+        _dbPulledCount = 0;
       });
+      _notifyEntriesChanged();
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -82,6 +109,7 @@ class _FollowUpDashboardScreenState extends State<FollowUpDashboardScreen> {
         row['memberName'] ?? '',
         row['formId'] ?? '',
         row['followUpDate'] ?? '',
+        row['scope'] ?? '',
       ].join('|');
       if (seen.contains(key)) continue;
       seen.add(key);
@@ -110,8 +138,13 @@ class _FollowUpDashboardScreenState extends State<FollowUpDashboardScreen> {
   List<Map<String, String>> _filteredEntries() {
     final now = DateTime.now();
     final filtered = _rows.where((e) {
-      if (_selectedFilter == 'All') return true;
-      return (e['formCategory'] ?? '') == _selectedFilter;
+      final categoryMatch =
+          _selectedFilter == 'All' || (e['formCategory'] ?? '') == _selectedFilter;
+      final statusMatch =
+          _selectedStatus == 'All' || (e['status'] ?? 'Planned') == _selectedStatus;
+      final scopeMatch =
+          _selectedScope == 'All' || (e['scope'] ?? 'Individual') == _selectedScope;
+      return categoryMatch && statusMatch && scopeMatch;
     }).toList();
     filtered.sort((a, b) {
       final da = _parseDate(a['followUpDate']) ?? DateTime(now.year + 20);
@@ -119,6 +152,45 @@ class _FollowUpDashboardScreenState extends State<FollowUpDashboardScreen> {
       return da.compareTo(db);
     });
     return filtered;
+  }
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'Completed':
+        return Colors.green;
+      case 'Missed':
+        return Colors.red;
+      case 'Rescheduled':
+        return Colors.blue;
+      default:
+        return Colors.orange;
+    }
+  }
+
+  Future<void> _markStatus(
+    Map<String, String> row,
+    String status,
+  ) async {
+    setState(() {
+      row['status'] = status;
+    });
+    _notifyEntriesChanged();
+  }
+
+  Future<void> _reschedule(Map<String, String> row) async {
+    final initial = _parseDate(row['followUpDate']) ?? DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      row['followUpDate'] = picked.toIso8601String().split('T').first;
+      row['status'] = 'Rescheduled';
+    });
+    _notifyEntriesChanged();
   }
 
   @override
@@ -163,17 +235,46 @@ class _FollowUpDashboardScreenState extends State<FollowUpDashboardScreen> {
                     setState(() => _selectedFilter = v);
                   },
                 ),
+                const SizedBox(width: 10),
+                DropdownButton<String>(
+                  value: _selectedStatus,
+                  items: _statusFilters
+                      .map((f) => DropdownMenuItem(value: f, child: Text(f)))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v == null) return;
+                    setState(() => _selectedStatus = v);
+                  },
+                ),
+                const SizedBox(width: 10),
+                DropdownButton<String>(
+                  value: _selectedScope,
+                  items: _scopeFilters
+                      .map((f) => DropdownMenuItem(value: f, child: Text(f)))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v == null) return;
+                    setState(() => _selectedScope = v);
+                  },
+                ),
                 const Spacer(),
-                IconButton(
-                  tooltip: 'Refresh',
+                OutlinedButton.icon(
                   onPressed: _loadFromDatabase,
-                  icon: const Icon(Icons.refresh),
+                  icon: const Icon(Icons.download_for_offline_outlined),
+                  label: const Text('Pull DB'),
                 ),
                 Text(
                   'Total: ${rows.length}',
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Pulled from DB: $_dbPulledCount',
+              style: TextStyle(
+                color: _dbPulledCount > 0 ? Colors.green : Colors.black54,
+              ),
             ),
             if (_isLoading)
               const Padding(
@@ -201,24 +302,90 @@ class _FollowUpDashboardScreenState extends State<FollowUpDashboardScreen> {
                         final row = rows[index];
                         final followDate = _parseDate(row['followUpDate']);
                         final badge = _dueBadge(followDate);
+                        final status = row['status'] ?? 'Planned';
+                        final scope = row['scope'] ?? 'Individual';
                         return Card(
                           child: ListTile(
                             title: Text(
                               '${row['formCategory'] ?? row['formId'] ?? '-'} | ${row['memberName'] ?? '-'}',
                             ),
                             subtitle: Text(
-                              'Family ${row['familyId'] ?? '-'} | Follow-up ${row['followUpDate'] ?? '-'}',
+                              'Family ${row['familyId'] ?? '-'} | '
+                              'Follow-up ${row['followUpDate'] ?? '-'} | '
+                              'Status $status | Scope $scope',
                             ),
-                            trailing: Text(
-                              badge,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: badge == 'Overdue'
-                                    ? Colors.red
-                                    : badge == 'Due Today'
-                                        ? Colors.orange
-                                        : Colors.green,
-                              ),
+                            trailing: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  badge,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: badge == 'Overdue'
+                                        ? Colors.red
+                                        : badge == 'Due Today'
+                                            ? Colors.orange
+                                            : Colors.green,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  status,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: _statusColor(status),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            onTap: () {
+                              showModalBottomSheet<void>(
+                                context: context,
+                                builder: (ctx) {
+                                  return SafeArea(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(12),
+                                      child: Wrap(
+                                        children: [
+                                          ListTile(
+                                            title: const Text('Mark Completed'),
+                                            onTap: () {
+                                              Navigator.pop(ctx);
+                                              _markStatus(row, 'Completed');
+                                            },
+                                          ),
+                                          ListTile(
+                                            title: const Text('Mark Missed'),
+                                            onTap: () {
+                                              Navigator.pop(ctx);
+                                              _markStatus(row, 'Missed');
+                                            },
+                                          ),
+                                          ListTile(
+                                            title: const Text('Reschedule'),
+                                            onTap: () async {
+                                              Navigator.pop(ctx);
+                                              await _reschedule(row);
+                                            },
+                                          ),
+                                          ListTile(
+                                            title: const Text('Reset to Planned'),
+                                            onTap: () {
+                                              Navigator.pop(ctx);
+                                              _markStatus(row, 'Planned');
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
                             ),
                           ),
                         );

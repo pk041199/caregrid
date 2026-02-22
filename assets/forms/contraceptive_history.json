@@ -1,0 +1,32 @@
+{
+  "id": "contraceptive_history",
+  "title": "Contraceptive History",
+  "version": 1,
+  "followup": {
+    "enabled": true,
+    "defaultCycleDays": 180,
+    "cycleOptionsDays": [90, 180, 365]
+  },
+  "sections": [
+    {
+      "id": "current_method",
+      "title": "Current Method",
+      "fields": [
+        { "id": "using_contraception", "label": "Using Contraception (Yes/No + details)", "type": "text", "required": false },
+        { "id": "method_type", "label": "Method Type (Condom/OCP/IUCD/etc.)", "type": "text", "required": false },
+        { "id": "started_on", "label": "Started On", "type": "date", "required": false },
+        { "id": "compliance", "label": "Compliance (regular/irregular + reason)", "type": "text", "required": false }
+      ]
+    },
+    {
+      "id": "counselling_followup",
+      "title": "Counselling & Follow-up",
+      "fields": [
+        { "id": "side_effects", "label": "Side Effects", "type": "textarea", "required": false },
+        { "id": "method_switch_needed", "label": "Method Switch Needed (Yes/No + why)", "type": "text", "required": false },
+        { "id": "counselling_provided", "label": "Counselling Provided (what advised)", "type": "textarea", "required": false },
+        { "id": "next_follow_up_date", "label": "Next Follow-up Date", "type": "date", "required": false }
+      ]
+    }
+  ]
+}

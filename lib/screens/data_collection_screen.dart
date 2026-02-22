@@ -3,10 +3,13 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
 import 'form_viewer_screen.dart';
 import 'follow_up_dashboard_screen.dart';
+import 'individual_profile_screen.dart';
+import 'widgets/data_collection_widgets.dart';
 import '../services/auth_service.dart';
 import 'id_card_screen.dart';
 
@@ -76,6 +79,9 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> {
           entries: entries,
           samplingUnit: widget.samplingUnit,
           setupData: widget.setupData,
+          onEntriesChanged: (updated) {
+            _sectionKey.currentState?.replaceRevisitEntries(updated);
+          },
         ),
       ),
     );
@@ -105,6 +111,7 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
   final List<Map<String, dynamic>> _familyEntries = [];
   final List<Map<String, String>> _revisitEntries = [];
   final Random _random = Random.secure();
+  bool _stateLoaded = false;
   bool _isUploading = false;
   int _familyCounter = 1;
 
@@ -154,6 +161,10 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
 
   static const List<String> _memberFormAssets = [
     'assets/forms/clinical_history.json',
+    'assets/forms/smoking_history.json',
+    'assets/forms/occupational_history.json',
+    'assets/forms/reproductive_history.json',
+    'assets/forms/contraceptive_history.json',
     'assets/forms/anc.json',
     'assets/forms/pnc.json',
     'assets/forms/new_born.json',
@@ -162,12 +173,85 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
     'assets/forms/diet_recall_24h_individual.json',
   ];
 
+  static const Map<String, String> _formIdToAsset = {
+    'clinical_history': 'assets/forms/clinical_history.json',
+    'smoking_history': 'assets/forms/smoking_history.json',
+    'occupational_history': 'assets/forms/occupational_history.json',
+    'reproductive_history': 'assets/forms/reproductive_history.json',
+    'contraceptive_history': 'assets/forms/contraceptive_history.json',
+    'anc': 'assets/forms/anc.json',
+    'pnc': 'assets/forms/pnc.json',
+    'new_born': 'assets/forms/new_born.json',
+    'under_5': 'assets/forms/under_5.json',
+    'ncd': 'assets/forms/ncd.json',
+    'diet_recall_24h': 'assets/forms/diet_recall_24h_individual.json',
+  };
+
   final AuthService _authService = AuthService();
 
   @override
   void initState() {
     super.initState();
-    _seedSampleFamilyEntry();
+    _restoreLocalState();
+  }
+
+  String _storageKey(String suffix) {
+    final area = (widget.setupData['areaCode'] ?? 'NA').trim();
+    final sampling = widget.samplingUnit.trim();
+    return 'caregrid_${area}_${sampling}_$suffix';
+  }
+
+  Future<void> _restoreLocalState() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final rawFamilies = prefs.getString(_storageKey('families')) ?? '';
+      final rawRevisits = prefs.getString(_storageKey('revisits')) ?? '';
+      final savedCounter = prefs.getInt(_storageKey('family_counter'));
+
+      if (savedCounter != null && savedCounter > 0) {
+        _familyCounter = savedCounter;
+      }
+
+      if (rawFamilies.trim().isNotEmpty) {
+        final decoded = jsonDecode(rawFamilies);
+        if (decoded is List) {
+          _familyEntries
+            ..clear()
+            ..addAll(decoded.whereType<Map>().map((e) => Map<String, dynamic>.from(e)));
+        }
+      }
+
+      if (rawRevisits.trim().isNotEmpty) {
+        final decoded = jsonDecode(rawRevisits);
+        if (decoded is List) {
+          _revisitEntries
+            ..clear()
+            ..addAll(decoded.whereType<Map>().map((e) => e.map(
+                  (k, v) => MapEntry(k.toString(), (v ?? '').toString()),
+                )));
+        }
+      }
+    } catch (_) {
+      // Fallback to seed.
+    }
+
+    if (_familyEntries.isEmpty) {
+      _seedSampleFamilyEntry();
+    }
+    if (!mounted) return;
+    setState(() {
+      _stateLoaded = true;
+    });
+    await _persistLocalState();
+  }
+
+  Future<void> _persistLocalState() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_storageKey('families'), jsonEncode(_familyEntries));
+      await prefs.setString(_storageKey('revisits'), jsonEncode(_revisitEntries));
+      await prefs.setInt(_storageKey('family_counter'), _familyCounter);
+    } catch (_) {}
   }
 
   void _seedSampleFamilyEntry() {
@@ -202,6 +286,12 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
           'monthlyIncome': '15000',
           'status': 'Alive',
           'clinicalHistory': 'No known conditions.',
+          'hasNcd': 'Yes',
+          'ncdActive': 'true',
+          'knownConditions': 'Hypertension',
+          'presentingComplaints': jsonEncode(['Headache', 'Giddiness']),
+          'currentMedicationsList': jsonEncode(['Amlodipine 5 mg OD']),
+          'allergyHistoryList': jsonEncode(['No known drug allergy']),
         },
         {
           'personUuid': _generateUuid(),
@@ -214,10 +304,68 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
           'workStatus': 'Homemaker',
           'monthlyIncome': '',
           'status': 'Alive',
-          'clinicalHistory': '',
+          'clinicalHistory': '2nd trimester follow-up pending.',
+          'pregnancyStatus': 'Pregnant',
+          'numberOfKids': '1',
+          'presentingComplaints': jsonEncode(['Backache']),
+          'knownConditionsList': jsonEncode(['Mild anemia']),
+          'currentMedicationsList': jsonEncode(['IFA tablet', 'Calcium tablet']),
+          'allergyHistoryList': jsonEncode(['No known allergy']),
+          'ancBaseline': jsonEncode({
+            'lmp': '2025-09-15',
+            'gpla': 'G2P1L1A0',
+            'picme': 'PICME123456'
+          }),
+          'ancHistory': jsonEncode([
+            {
+              'formId': 'anc',
+              'formTitle': 'Antenatal Care (ANC) Field Checklist',
+              'followUpDate': DateTime.now()
+                  .add(const Duration(days: 14))
+                  .toIso8601String()
+                  .split('T')
+                  .first,
+              'values': {
+                'visitType': 'First',
+                'picme': 'PICME123456',
+                'lmp': '2025-09-15',
+                'edd': '2026-06-22',
+                'gaWeeks': '10',
+                'trimester': 'I',
+                'totalAncVisits': '1',
+                'gpla': 'G2P1L1A0',
+                'height': '154',
+                'weight': '54',
+                'complaints': ['Backache'],
+                'coMorbidities': ['Mild anemia']
+              }
+            }
+          ]),
         },
       ],
     });
+    _addRevisitEntry(
+      familyId: sampleFamilyId,
+      memberName: 'Sample Head',
+      formId: 'ncd',
+      formTitle: 'NCD Follow-up (Demo)',
+      followUpDate: DateTime.now()
+          .add(const Duration(days: 7))
+          .toIso8601String()
+          .split('T')
+          .first,
+    );
+    _addRevisitEntry(
+      familyId: sampleFamilyId,
+      memberName: 'Sample Member',
+      formId: 'anc',
+      formTitle: 'ANC Follow-up (Demo)',
+      followUpDate: DateTime.now()
+          .add(const Duration(days: 14))
+          .toIso8601String()
+          .split('T')
+          .first,
+    );
   }
 
   static const List<String> _memberStatuses = [
@@ -234,12 +382,23 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
   List<Map<String, String>> getRevisitEntries() =>
       _revisitEntries.map((e) => Map<String, String>.from(e)).toList();
 
+  void replaceRevisitEntries(List<Map<String, String>> entries) {
+    _revisitEntries
+      ..clear()
+      ..addAll(entries.map((e) => Map<String, String>.from(e)));
+    _persistLocalState();
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   void _addRevisitEntry({
     required String familyId,
     required String memberName,
     required String formId,
     required String formTitle,
     required String followUpDate,
+    String scope = 'Individual',
   }) {
     if (followUpDate.trim().isEmpty) return;
     final category = formId == 'under_5'
@@ -254,7 +413,10 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
       'formTitle': formTitle,
       'formCategory': category,
       'followUpDate': followUpDate,
+      'status': 'Planned',
+      'scope': scope,
     });
+    _persistLocalState();
   }
 
   String _resolveFollowUpDate(
@@ -304,6 +466,48 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
         '${h.substring(12, 16)}-'
         '${h.substring(16, 20)}-'
         '${h.substring(20, 32)}';
+  }
+
+  List<String> _allowedMemberFormIds(Map<String, String> member) {
+    final sex = (member['sex'] ?? '').toLowerCase().trim();
+    final pregnancy = (member['pregnancyStatus'] ?? '').toLowerCase().trim();
+    final age = int.tryParse((member['age'] ?? '').trim()) ?? 0;
+    final allowed = _formIdToAsset.keys.toSet();
+
+    if (age < 10) {
+      allowed.remove('smoking_history');
+      allowed.remove('contraceptive_history');
+      allowed.remove('reproductive_history');
+      allowed.remove('anc');
+      allowed.remove('pnc');
+    }
+
+    if (sex != 'female') {
+      allowed.remove('anc');
+      allowed.remove('pnc');
+      allowed.remove('reproductive_history');
+      allowed.remove('contraceptive_history');
+    } else {
+      if (pregnancy != 'pregnant') {
+        allowed.remove('anc');
+      }
+      if (pregnancy != 'postpartum') {
+        allowed.remove('pnc');
+      }
+    }
+    return allowed.toList();
+  }
+
+  List<String> _memberAssetsFor(Map<String, String> member) {
+    final allowed = _allowedMemberFormIds(member).toSet();
+    return _memberFormAssets.where((asset) {
+      final matched = _formIdToAsset.entries
+          .where((e) => e.value == asset)
+          .map((e) => e.key)
+          .toList();
+      if (matched.isEmpty) return true;
+      return allowed.contains(matched.first);
+    }).toList();
   }
 
   void _disposeControllersAfterTransition(
@@ -758,6 +962,7 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                                 'members': members.cast<Map<String, String>>(),
                               });
                             });
+                            _persistLocalState();
                             Navigator.pop(dialogContext);
                           },
                           child: const Text('Save Family Entry'),
@@ -824,6 +1029,7 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
         family['gpsCaptured'] = true;
         family['allowGpsUpdate'] = false;
       });
+      _persistLocalState();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('GPS captured.')),
       );
@@ -1026,6 +1232,7 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
         family['gps'] = gpsController.text.trim();
         family['gpsCaptured'] = true;
       });
+      _persistLocalState();
     }
     _disposeControllersAfterTransition([controller, gpsController]);
   }
@@ -1059,44 +1266,173 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
     }
   }
 
-  Future<void> _openClinicalHistoryDialog({
+  void _handleMemberFormResult({
+    required Map<String, dynamic> family,
+    required Map<String, String> member,
+    required Map<String, dynamic> form,
+    required Map<String, dynamic>? result,
+  }) {
+    final formId = (result?['formId'] ?? form['id'] ?? '').toString();
+    if (formId == 'ncd') {
+      member['ncdActive'] = 'true';
+    }
+    if (formId == 'anc' && result != null) {
+      final history = <dynamic>[];
+      final historyRaw = member['ancHistory'];
+      if ((historyRaw ?? '').trim().isNotEmpty) {
+        try {
+          final decoded = jsonDecode(historyRaw!);
+          if (decoded is List) {
+            history.addAll(decoded);
+          }
+        } catch (_) {}
+      }
+      history.add(result);
+      member['ancHistory'] = jsonEncode(history);
+      final baseline = (result['ancBaseline'] as Map<String, dynamic>? ??
+              const <String, dynamic>{})
+          .map((k, v) => MapEntry(k, (v ?? '').toString()));
+      member['ancBaseline'] = jsonEncode(baseline);
+    }
+    final followForNcd = _resolveFollowUpDate(form, result);
+    _addRevisitEntry(
+      familyId: (family['familyId'] ?? '').toString(),
+      memberName: (member['fullName'] ?? '').toString(),
+      formId: formId,
+      formTitle: (result?['formTitle'] ?? form['title'] ?? '').toString(),
+      followUpDate: followForNcd,
+    );
+    _persistLocalState();
+  }
+
+  Future<void> _openIndividualProfile({
+    required Map<String, dynamic> family,
     required Map<String, String> member,
   }) async {
-    final controller =
-        TextEditingController(text: member['clinicalHistory'] ?? '');
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Clinical History'),
-          content: TextField(
-            controller: controller,
-            maxLines: 6,
-            decoration: const InputDecoration(
-              labelText: 'Notes',
-              border: OutlineInputBorder(),
+    final familyMemberCount =
+        (family['members'] as List<Map<String, String>>?)?.length ??
+            int.tryParse((family['memberCount'] ?? '').toString()) ??
+            0;
+    final response = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => IndividualProfileScreen(
+          member: member,
+          familyId: (family['familyId'] ?? '').toString(),
+          familyMemberCount: familyMemberCount,
+        ),
+      ),
+    );
+    if (response is! Map<String, dynamic> || !mounted) return;
+
+    final updatedMember = response['member'];
+    if (updatedMember is Map<String, String>) {
+      member
+        ..clear()
+        ..addAll(updatedMember);
+    } else if (updatedMember is Map) {
+      member
+        ..clear()
+        ..addAll(
+          updatedMember.map(
+            (k, v) => MapEntry(k.toString(), (v ?? '').toString()),
+          ),
+        );
+    }
+
+    final allowedIds = _allowedMemberFormIds(member).toSet();
+    final suggested = (response['suggestedFormIds'] as List<dynamic>? ?? const [])
+        .map((e) => e.toString())
+        .where(allowedIds.contains)
+        .toList();
+    final requiredAddons =
+        (response['requiredAddonFormIds'] as List<dynamic>? ?? const [])
+            .map((e) => e.toString())
+            .where(allowedIds.contains)
+            .toList();
+    final shouldOpenForms = response['openForms'] == true;
+
+    setState(() {});
+    _persistLocalState();
+    if (!shouldOpenForms) return;
+
+    final immediateForms = <String>[];
+    immediateForms.addAll(requiredAddons);
+    for (final id in suggested) {
+      if (!immediateForms.contains(id)) {
+        immediateForms.add(id);
+      }
+    }
+
+    if (immediateForms.isNotEmpty) {
+      for (final formId in immediateForms) {
+        if (!mounted) return;
+        final assetPath = _formIdToAsset[formId];
+        if (assetPath == null) continue;
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => FormViewerScreen(
+              assetPath: assetPath,
+              entityLabel:
+                  '${member['fullName'] ?? ''} (${family['familyId'] ?? ''})',
+              contextData: {
+                'ancHistory': member['ancHistory'],
+                'ancBaseline': member['ancBaseline'],
+              },
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  member['clinicalHistory'] = controller.text.trim();
-                });
-                Navigator.pop(dialogContext);
-              },
-              child: const Text('Save'),
-            ),
-          ],
         );
+        Map<String, dynamic> formMeta = {'id': formId, 'title': formId.toUpperCase()};
+        try {
+          final jsonStr = await rootBundle.loadString(assetPath);
+          final parsed = jsonDecode(jsonStr);
+          if (parsed is Map<String, dynamic>) {
+            formMeta = parsed;
+          }
+        } catch (_) {}
+        _handleMemberFormResult(
+          family: family,
+          member: member,
+          form: formMeta,
+          result: result is Map<String, dynamic> ? result : null,
+        );
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Immediate forms completed: ${immediateForms.join(', ').toUpperCase()}',
+          ),
+        ),
+      );
+      setState(() {});
+      _persistLocalState();
+      return;
+    }
+
+    final allowedAssets = _memberAssetsFor(member);
+    await _openFormList(
+      title: 'Member Forms',
+      assets: allowedAssets,
+      entityLabel:
+          '${member['fullName'] ?? ''} (${family['familyId'] ?? ''})',
+      contextData: {
+        'ancHistory': member['ancHistory'],
+        'ancBaseline': member['ancBaseline'],
+      },
+      suggestedFormIds: suggested,
+      onSelect: (form, result) {
+        _handleMemberFormResult(
+          family: family,
+          member: member,
+          form: form,
+          result: result,
+        );
+        setState(() {});
+        _persistLocalState();
       },
     );
-
-    _disposeControllersAfterTransition([controller]);
   }
 
   Future<void> _addMemberToFamily(Map<String, dynamic> family) async {
@@ -1110,44 +1446,27 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
       members.add(result);
       family['memberCount'] = members.length.toString();
     });
+    _persistLocalState();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!_stateLoaded) {
+      return const Center(child: CircularProgressIndicator());
+    }
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Sampling Unit: ${widget.samplingUnit}'),
-                  Text('State: ${widget.setupData['state'] ?? '-'}'),
-                  Text('District: ${widget.setupData['district'] ?? '-'}'),
-                  Text('Taluk/Mandal: ${widget.setupData['taluk'] ?? '-'}'),
-                  Text('Area Code: ${widget.setupData['areaCode'] ?? '-'}'),
-                ],
-              ),
-            ),
+          GridContextCard(
+            samplingUnit: widget.samplingUnit,
+            setupData: widget.setupData,
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Text(
-                'Saved Family Entries: ${_familyEntries.length}',
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const Spacer(),
-              ElevatedButton.icon(
-                onPressed: _openAddFamilySheet,
-                icon: const Icon(Icons.add),
-                label: const Text('Add Entry'),
-              ),
-            ],
+          FamilyListHeader(
+            familyCount: _familyEntries.length,
+            onAddEntry: _openAddFamilySheet,
           ),
           const SizedBox(height: 8),
           Expanded(
@@ -1202,8 +1521,10 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                                       formId: (result?['formId'] ?? form['id'] ?? '').toString(),
                                       formTitle: (result?['formTitle'] ?? form['title'] ?? '').toString(),
                                       followUpDate: follow,
+                                      scope: 'Family',
                                     );
                                     setState(() {});
+                                    _persistLocalState();
                                   },
                                 ),
                                 icon: const Icon(Icons.article_outlined),
@@ -1255,16 +1576,19 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                                       setState(() {
                                         family['familyStatus'] = 'Active';
                                       });
+                                      _persistLocalState();
                                       break;
                                     case 'status_migrated':
                                       setState(() {
                                         family['familyStatus'] = 'Migrated';
                                       });
+                                      _persistLocalState();
                                       break;
                                     case 'status_dissolved':
                                       setState(() {
                                         family['familyStatus'] = 'Dissolved';
                                       });
+                                      _persistLocalState();
                                       break;
                                   }
                                 },
@@ -1318,21 +1642,26 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                                   'Income ${m['monthlyIncome']?.isEmpty == true ? '-' : m['monthlyIncome']} | '
                                   'Status ${m['status'] ?? 'Alive'}',
                                 ),
-                                onTap: () => _openClinicalHistoryDialog(member: m),
+                                onTap: () => _openIndividualProfile(
+                                  family: family,
+                                  member: m,
+                                ),
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    IconButton(
-                                      tooltip: 'History',
-                                      onPressed: () =>
-                                          _openClinicalHistoryDialog(member: m),
-                                      icon: const Icon(Icons.history),
+                                      IconButton(
+                                      tooltip: 'Profile',
+                                      onPressed: () => _openIndividualProfile(
+                                        family: family,
+                                        member: m,
+                                      ),
+                                      icon: const Icon(Icons.person_outline),
                                     ),
                                       IconButton(
                                         tooltip: 'Forms',
                                         onPressed: () => _openFormList(
                                           title: 'Member Forms',
-                                          assets: _memberFormAssets,
+                                          assets: _memberAssetsFor(m),
                                           entityLabel:
                                               '${m['fullName'] ?? ''} (${family['familyId'] ?? ''})',
                                           contextData: {
@@ -1340,41 +1669,20 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                                             'ancBaseline': m['ancBaseline'],
                                           },
                                           suggestedFormIds:
-                                              (m['ncdActive'] == 'true')
+                                              (m['ncdActive'] == 'true' &&
+                                                      _allowedMemberFormIds(m)
+                                                          .contains('diet_recall_24h'))
                                                   ? ['diet_recall_24h']
                                                   : const [],
                                           onSelect: (form, result) {
-                                            final formId =
-                                                (result?['formId'] ?? form['id'] ?? '').toString();
-                                            if (formId == 'ncd') {
-                                              setState(() {
-                                                m['ncdActive'] = 'true';
-                                              });
-                                            }
-                                            if (formId == 'anc' && result != null) {
-                                              final history = (m['ancHistory'] as List<dynamic>? ??
-                                                      <dynamic>[])
-                                                  .toList();
-                                              history.add(result);
-                                              m['ancHistory'] = jsonEncode(history);
-                                              final baseline =
-                                                  (result['ancBaseline'] as Map<String, dynamic>? ??
-                                                          const <String, dynamic>{})
-                                                      .map(
-                                                (k, v) => MapEntry(k, (v ?? '').toString()),
-                                              );
-                                              m['ancBaseline'] = jsonEncode(baseline);
-                                            }
-                                            final followForNcd =
-                                                _resolveFollowUpDate(form, result);
-                                            _addRevisitEntry(
-                                              familyId: (family['familyId'] ?? '').toString(),
-                                              memberName: (m['fullName'] ?? '').toString(),
-                                              formId: formId,
-                                              formTitle: (result?['formTitle'] ?? form['title'] ?? '').toString(),
-                                              followUpDate: followForNcd,
+                                            _handleMemberFormResult(
+                                              family: family,
+                                              member: m,
+                                              form: form,
+                                              result: result,
                                             );
                                             setState(() {});
+                                            _persistLocalState();
                                           },
                                         ),
                                         icon: const Icon(Icons.article_outlined),
@@ -1384,6 +1692,7 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                                         setState(() {
                                           m['status'] = value;
                                         });
+                                        _persistLocalState();
                                       },
                                       itemBuilder: (context) => _memberStatuses
                                           .map(

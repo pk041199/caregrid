@@ -10,7 +10,7 @@ class CareGridApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'CareGrid',
-      initialRoute: RouteNames.home,
+      initialRoute: RouteNames.login,
       onGenerateRoute: AppRoutes.onGenerateRoute,
     );
   }
