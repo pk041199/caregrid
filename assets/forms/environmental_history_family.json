@@ -1,0 +1,96 @@
+{
+  "id": "environmental_history_family",
+  "title": "Environmental History (Family)",
+  "version": 1,
+  "followup": { "enabled": false },
+  "sections": [
+    {
+      "id": "housing",
+      "title": "Housing",
+      "fields": [
+        {
+          "id": "house_type",
+          "label": "House Type",
+          "type": "select",
+          "required": true,
+          "options": ["Kutcha", "Semi‑pucca", "Pucca"]
+        },
+        {
+          "id": "no_of_rooms",
+          "label": "Number of Rooms",
+          "type": "number",
+          "required": false,
+          "validation": { "min": 1, "max": 20 }
+        },
+        {
+          "id": "overcrowding",
+          "label": "Overcrowding",
+          "type": "select",
+          "required": false,
+          "options": ["Yes", "No", "Unknown"]
+        }
+      ]
+    },
+    {
+      "id": "water_sanitation",
+      "title": "Water and Sanitation",
+      "fields": [
+        {
+          "id": "drinking_water_source",
+          "label": "Drinking Water Source",
+          "type": "select",
+          "required": true,
+          "options": ["Piped", "Borewell", "Open well", "Tank", "Other"]
+        },
+        {
+          "id": "water_treatment",
+          "label": "Water Treatment at Home",
+          "type": "select",
+          "required": false,
+          "options": ["Boiling", "Filter", "Chlorination", "None"]
+        },
+        {
+          "id": "toilet_type",
+          "label": "Toilet Type",
+          "type": "select",
+          "required": true,
+          "options": ["Household", "Community", "Open defecation"]
+        },
+        {
+          "id": "solid_waste_disposal",
+          "label": "Solid Waste Disposal",
+          "type": "select",
+          "required": false,
+          "options": ["Door‑to‑door", "Burning", "Open dumping", "Other"]
+        }
+      ]
+    },
+    {
+      "id": "indoor_air",
+      "title": "Indoor Air and Cooking",
+      "fields": [
+        {
+          "id": "cooking_fuel",
+          "label": "Cooking Fuel",
+          "type": "select",
+          "required": true,
+          "options": ["LPG", "Electric", "Biomass", "Kerosene", "Other"]
+        },
+        {
+          "id": "kitchen_ventilation",
+          "label": "Kitchen Ventilation",
+          "type": "select",
+          "required": false,
+          "options": ["Good", "Average", "Poor"]
+        },
+        {
+          "id": "smoking_inside",
+          "label": "Smoking Inside Home",
+          "type": "select",
+          "required": false,
+          "options": ["Yes", "No", "Unknown"]
+        }
+      ]
+    }
+  ]
+}

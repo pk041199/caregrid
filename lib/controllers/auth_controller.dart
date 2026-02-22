@@ -106,6 +106,17 @@ class AuthController extends ChangeNotifier {
     }
   }
 
+  Future<void> signInDemo(String role) async {
+    _startRequest();
+    try {
+      await _authService.signInDemo(role: role);
+      _finishRequest();
+    } catch (_) {
+      _errorMessage = 'Demo login failed.';
+      _finishRequest();
+    }
+  }
+
   void _startRequest() {
     _isLoading = true;
     _errorMessage = null;

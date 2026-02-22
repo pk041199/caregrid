@@ -1,0 +1,39 @@
+{
+  "id": "ncd",
+  "title": "NCD Screening",
+  "version": 1,
+  "followup": {
+    "enabled": true,
+    "defaultCycleDays": 90,
+    "cycleOptionsDays": [30, 60, 90, 180]
+  },
+  "sections": [
+    {
+      "id": "risk_factors",
+      "title": "Risk Factors",
+      "fields": [
+        { "id": "tobacco_use", "label": "Tobacco Use", "type": "select", "required": false, "options": ["Never", "Former", "Current"] },
+        { "id": "alcohol_use", "label": "Alcohol Use", "type": "select", "required": false, "options": ["Never", "Former", "Current"] },
+        { "id": "physical_activity", "label": "Physical Activity", "type": "select", "required": false, "options": ["Adequate", "Inadequate", "Unknown"] }
+      ]
+    },
+    {
+      "id": "screening",
+      "title": "Screening",
+      "fields": [
+        { "id": "bp_systolic", "label": "BP Systolic", "type": "number", "required": false, "validation": { "min": 60, "max": 260 } },
+        { "id": "bp_diastolic", "label": "BP Diastolic", "type": "number", "required": false, "validation": { "min": 30, "max": 160 } },
+        { "id": "fbs", "label": "Fasting Blood Sugar (mg/dL)", "type": "number", "required": false, "validation": { "min": 40, "max": 400 } },
+        { "id": "rbs", "label": "Random Blood Sugar (mg/dL)", "type": "number", "required": false, "validation": { "min": 40, "max": 600 } }
+      ]
+    },
+    {
+      "id": "diagnosis",
+      "title": "Provisional Diagnosis",
+      "fields": [
+        { "id": "htn", "label": "Hypertension", "type": "select", "required": false, "options": ["Yes", "No", "Suspected"] },
+        { "id": "dm", "label": "Diabetes Mellitus", "type": "select", "required": false, "options": ["Yes", "No", "Suspected"] }
+      ]
+    }
+  ]
+}

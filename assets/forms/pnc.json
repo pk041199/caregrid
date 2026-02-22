@@ -1,0 +1,134 @@
+{
+  "id": "pnc",
+  "title": "Postnatal Care (PNC) Field Checklist",
+  "version": 1,
+  "followup": {
+    "enabled": true,
+    "defaultCycleDays": 7,
+    "cycleOptionsDays": [2, 7, 14, 42]
+  },
+  "sections": [
+    {
+      "id": "identification",
+      "title": "Identification Details",
+      "fields": [
+        { "id": "mother_name", "label": "Mother Name", "type": "text", "required": false },
+        { "id": "age", "label": "Age", "type": "number", "required": false },
+        { "id": "phone", "label": "Phone", "type": "text", "required": false },
+        { "id": "mcp_card_no", "label": "MCP Card No", "type": "text", "required": false },
+        { "id": "gravida", "label": "Gravida", "type": "number", "required": false },
+        { "id": "para", "label": "Para", "type": "number", "required": false },
+        { "id": "living", "label": "Living", "type": "number", "required": false },
+        { "id": "abortions", "label": "Abortions", "type": "number", "required": false },
+        { "id": "date_of_delivery", "label": "Date of Delivery", "type": "date", "required": false },
+        { "id": "place_of_delivery", "label": "Place of Delivery", "type": "text", "required": false },
+        { "id": "mode_of_delivery", "label": "Mode of Delivery", "type": "select", "options": ["Normal", "LSCS", "Assisted"], "required": false },
+        { "id": "postnatal_day", "label": "Postnatal Day", "type": "number", "required": false }
+      ]
+    },
+    {
+      "id": "present_complaints",
+      "title": "Present Complaints",
+      "fields": [
+        { "id": "complaints", "label": "Complaints", "type": "text", "required": false }
+      ]
+    },
+    {
+      "id": "risk_history",
+      "title": "Risk and Past History",
+      "fields": [
+        { "id": "pph_history", "label": "PPH History", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "lscs_delivery", "label": "LSCS Delivery", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "preeclampsia_eclampsia", "label": "Pre-eclampsia/Eclampsia", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "anaemia", "label": "Anaemia", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "diabetes", "label": "Diabetes", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "hypertension", "label": "Hypertension", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "thyroid_disorder", "label": "Thyroid Disorder", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "sepsis", "label": "Sepsis", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "multiple_pregnancy", "label": "Multiple Pregnancy", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "preterm_birth", "label": "Preterm Birth", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "high_risk", "label": "High Risk", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "high_risk_specify", "label": "If yes, specify", "type": "text", "required": false }
+      ]
+    },
+    {
+      "id": "maternal_examination",
+      "title": "Maternal Examination",
+      "fields": [
+        { "id": "temperature", "label": "Temperature", "type": "number", "required": false },
+        { "id": "pulse", "label": "Pulse/min", "type": "number", "required": false },
+        { "id": "bp", "label": "BP", "type": "text", "required": false },
+        { "id": "pallor", "label": "Pallor", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "pedal_edema", "label": "Pedal Edema", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "breasts", "label": "Breasts", "type": "text", "required": false },
+        { "id": "uterine_involution", "label": "Uterine Involution", "type": "text", "required": false },
+        { "id": "lochia", "label": "Lochia", "type": "text", "required": false },
+        { "id": "wound_status", "label": "Episiotomy/Wound Status", "type": "text", "required": false }
+      ]
+    },
+    {
+      "id": "newborn_assessment",
+      "title": "Newborn Assessment",
+      "fields": [
+        { "id": "baby_alive", "label": "Baby Alive", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "birth_weight", "label": "Birth Weight (kg)", "type": "number", "required": false },
+        { "id": "current_weight", "label": "Current Weight (kg)", "type": "number", "required": false },
+        { "id": "baby_temperature", "label": "Temperature", "type": "number", "required": false },
+        { "id": "cord_condition", "label": "Cord Condition", "type": "text", "required": false },
+        { "id": "skin_color", "label": "Skin Color", "type": "text", "required": false },
+        { "id": "feeding_well", "label": "Feeding Well", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "urine_passed", "label": "Urine Passed", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "stool_passed", "label": "Stool Passed", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "jaundice", "label": "Jaundice", "type": "select", "options": ["Yes", "No"], "required": false }
+      ]
+    },
+    {
+      "id": "investigations",
+      "title": "Investigations (If Done)",
+      "fields": [
+        { "id": "hb", "label": "Hb", "type": "number", "required": false },
+        { "id": "blood_sugar", "label": "Blood Sugar", "type": "text", "required": false },
+        { "id": "urine_examination", "label": "Urine Examination", "type": "text", "required": false },
+        { "id": "other_tests", "label": "Other Tests", "type": "text", "required": false }
+      ]
+    },
+    {
+      "id": "immunization",
+      "title": "Immunization and Supplements",
+      "fields": [
+        { "id": "mother_tt_booster", "label": "Mother TT Booster", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "ifa_given", "label": "IFA Given", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "calcium_given", "label": "Calcium Given", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "vitamin_a_given", "label": "Vitamin A Given", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "baby_bcg", "label": "Baby BCG", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "baby_opv", "label": "Baby OPV", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "baby_hepb", "label": "Baby Hepatitis B", "type": "select", "options": ["Yes", "No"], "required": false }
+      ]
+    },
+    {
+      "id": "counseling",
+      "title": "Counseling Provided",
+      "fields": [
+        { "id": "ebf_advice", "label": "Exclusive Breastfeeding Advice", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "diet_advice", "label": "Diet Advice", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "hygiene_advice", "label": "Hygiene Advice", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "family_planning", "label": "Family Planning", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "postnatal_exercises", "label": "Postnatal Exercises", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "danger_signs_explained", "label": "Danger Signs Explained", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "newborn_care_advice", "label": "Newborn Care Advice", "type": "select", "options": ["Yes", "No"], "required": false }
+      ]
+    },
+    {
+      "id": "follow_up",
+      "title": "Follow Up",
+      "fields": [
+        { "id": "next_visit_date", "label": "Next Visit Date", "type": "date", "required": false },
+        { "id": "referred", "label": "Referred", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "asha_informed", "label": "ASHA Informed", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "entry_in_pnc_register", "label": "Entry in PNC Register", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "signature", "label": "Signature", "type": "text", "required": false },
+        { "id": "signature_date", "label": "Date", "type": "date", "required": false }
+      ]
+    }
+  ]
+}

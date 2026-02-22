@@ -1,0 +1,40 @@
+{
+  "id": "clinical_history",
+  "title": "Clinical History",
+  "version": 1,
+  "followup": { "enabled": false },
+  "sections": [
+    {
+      "id": "past_history",
+      "title": "Past History",
+      "fields": [
+        { "id": "past_illness", "label": "Past Illness", "type": "text", "required": false },
+        { "id": "hospitalizations", "label": "Hospitalizations", "type": "text", "required": false },
+        { "id": "surgeries", "label": "Surgeries", "type": "text", "required": false }
+      ]
+    },
+    {
+      "id": "medications",
+      "title": "Current Medications",
+      "fields": [
+        { "id": "current_meds", "label": "Current Medications", "type": "text", "required": false }
+      ]
+    },
+    {
+      "id": "allergies",
+      "title": "Allergies",
+      "fields": [
+        { "id": "drug_allergy", "label": "Drug Allergy", "type": "select", "required": false, "options": ["Yes", "No", "Unknown"] },
+        { "id": "allergy_details", "label": "Allergy Details", "type": "text", "required": false, "showWhen": { "field": "drug_allergy", "equals": "Yes" } }
+      ]
+    },
+    {
+      "id": "habits",
+      "title": "Habits",
+      "fields": [
+        { "id": "tobacco", "label": "Tobacco Use", "type": "select", "required": false, "options": ["Never", "Former", "Current"] },
+        { "id": "alcohol", "label": "Alcohol Use", "type": "select", "required": false, "options": ["Never", "Former", "Current"] }
+      ]
+    }
+  ]
+}

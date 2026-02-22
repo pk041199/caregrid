@@ -1,0 +1,41 @@
+{
+  "id": "new_born",
+  "title": "New Born Visit",
+  "version": 1,
+  "followup": {
+    "enabled": true,
+    "defaultCycleDays": 7,
+    "cycleOptionsDays": [2, 7, 14, 28]
+  },
+  "sections": [
+    {
+      "id": "newborn_profile",
+      "title": "New Born Profile",
+      "fields": [
+        { "id": "baby_name", "label": "Baby Name", "type": "text", "required": false },
+        { "id": "dob", "label": "Date of Birth", "type": "date", "required": false },
+        { "id": "birth_weight", "label": "Birth Weight (kg)", "type": "number", "required": false },
+        { "id": "delivery_place", "label": "Delivery Place", "type": "text", "required": false }
+      ]
+    },
+    {
+      "id": "newborn_exam",
+      "title": "Assessment",
+      "fields": [
+        { "id": "feeding", "label": "Feeding Well", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "urine_output", "label": "Urine Passed", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "stool_output", "label": "Stool Passed", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "jaundice", "label": "Jaundice", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "danger_signs", "label": "Danger Signs", "type": "text", "required": false }
+      ]
+    },
+    {
+      "id": "follow_up",
+      "title": "Follow Up",
+      "fields": [
+        { "id": "next_visit_date", "label": "Next Visit Date", "type": "date", "required": false },
+        { "id": "remarks", "label": "Remarks", "type": "text", "required": false }
+      ]
+    }
+  ]
+}

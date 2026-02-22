@@ -1,0 +1,34 @@
+{
+  "id": "diet_recall_24h",
+  "title": "24‑Hour Diet Recall (Individual)",
+  "version": 1,
+  "followup": { "enabled": false },
+  "sections": [
+    {
+      "id": "recall",
+      "title": "Meals and Snacks (Last 24 hours)",
+      "fields": [
+        { "id": "morning", "label": "Early Morning", "type": "text", "required": false },
+        { "id": "breakfast", "label": "Breakfast", "type": "text", "required": false },
+        { "id": "mid_morning", "label": "Mid‑Morning", "type": "text", "required": false },
+        { "id": "lunch", "label": "Lunch", "type": "text", "required": false },
+        { "id": "evening", "label": "Evening Snacks", "type": "text", "required": false },
+        { "id": "dinner", "label": "Dinner", "type": "text", "required": false },
+        { "id": "late_night", "label": "Late‑Night", "type": "text", "required": false }
+      ]
+    },
+    {
+      "id": "water",
+      "title": "Water Intake",
+      "fields": [
+        {
+          "id": "water_glasses",
+          "label": "Water (glasses/day)",
+          "type": "number",
+          "required": false,
+          "validation": { "min": 0, "max": 30 }
+        }
+      ]
+    }
+  ]
+}

@@ -231,6 +231,20 @@ class AuthService {
     _authStateController.add(null);
   }
 
+  Future<void> signInDemo({
+    required String role,
+  }) async {
+    final userId = role == 'Doctor' ? 'DEMO-DR' : 'DEMO-FIELD';
+    _currentSession = OrganizationUserSession(
+      userId: userId,
+      fullName: role == 'Doctor' ? 'Demo Doctor' : 'Demo Field Staff',
+      role: role,
+      organizationId: 'demo-org',
+      organizationName: 'Demo Organization',
+    );
+    _authStateController.add(_currentSession);
+  }
+
   Future<void> resetPassword({
     required String organizationId,
     required String identifier,

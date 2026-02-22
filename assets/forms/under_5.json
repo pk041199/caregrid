@@ -1,0 +1,36 @@
+{
+  "id": "under_5",
+  "title": "Under‑5 Assessment",
+  "version": 1,
+  "followup": {
+    "enabled": true,
+    "defaultCycleDays": 90,
+    "cycleOptionsDays": [30, 60, 90, 180]
+  },
+  "sections": [
+    {
+      "id": "growth",
+      "title": "Growth",
+      "fields": [
+        { "id": "weight_kg", "label": "Weight (kg)", "type": "number", "required": false, "validation": { "min": 2, "max": 30 } },
+        { "id": "height_cm", "label": "Height/Length (cm)", "type": "number", "required": false, "validation": { "min": 40, "max": 120 } },
+        { "id": "muac_cm", "label": "MUAC (cm)", "type": "number", "required": false, "validation": { "min": 8, "max": 20 } }
+      ]
+    },
+    {
+      "id": "immunization",
+      "title": "Immunization",
+      "fields": [
+        { "id": "immunization_status", "label": "Immunization Status", "type": "select", "required": false, "options": ["Complete", "Partial", "Not done", "Unknown"] }
+      ]
+    },
+    {
+      "id": "illness",
+      "title": "Recent Illness",
+      "fields": [
+        { "id": "diarrhea_last2w", "label": "Diarrhea in last 2 weeks", "type": "select", "required": false, "options": ["Yes", "No", "Unknown"] },
+        { "id": "ari_last2w", "label": "ARI in last 2 weeks", "type": "select", "required": false, "options": ["Yes", "No", "Unknown"] }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "id": "nutritional_history_family",
+  "title": "Nutritional History (Family Monthly Consumption)",
+  "version": 1,
+  "followup": { "enabled": false },
+  "sections": [
+    {
+      "id": "monthly_consumption",
+      "title": "Monthly Consumption",
+      "fields": [
+        {
+          "id": "cereals_kg",
+          "label": "Cereals (kg/month)",
+          "type": "number",
+          "required": false,
+          "validation": { "min": 0, "max": 200 }
+        },
+        {
+          "id": "pulses_kg",
+          "label": "Pulses (kg/month)",
+          "type": "number",
+          "required": false,
+          "validation": { "min": 0, "max": 100 }
+        },
+        {
+          "id": "vegetables_kg",
+          "label": "Vegetables (kg/month)",
+          "type": "number",
+          "required": false,
+          "validation": { "min": 0, "max": 300 }
+        },
+        {
+          "id": "fruits_kg",
+          "label": "Fruits (kg/month)",
+          "type": "number",
+          "required": false,
+          "validation": { "min": 0, "max": 200 }
+        },
+        {
+          "id": "milk_l",
+          "label": "Milk (litres/month)",
+          "type": "number",
+          "required": false,
+          "validation": { "min": 0, "max": 300 }
+        },
+        {
+          "id": "eggs_count",
+          "label": "Eggs (count/month)",
+          "type": "number",
+          "required": false,
+          "validation": { "min": 0, "max": 2000 }
+        },
+        {
+          "id": "meat_kg",
+          "label": "Meat/Fish (kg/month)",
+          "type": "number",
+          "required": false,
+          "validation": { "min": 0, "max": 100 }
+        },
+        {
+          "id": "oil_l",
+          "label": "Edible Oil (litres/month)",
+          "type": "number",
+          "required": false,
+          "validation": { "min": 0, "max": 50 }
+        },
+        {
+          "id": "sugar_kg",
+          "label": "Sugar (kg/month)",
+          "type": "number",
+          "required": false,
+          "validation": { "min": 0, "max": 50 }
+        },
+        {
+          "id": "iodized_salt",
+          "label": "Iodized Salt Used",
+          "type": "select",
+          "required": false,
+          "options": ["Yes", "No", "Unknown"]
+        }
+      ]
+    }
+  ]
+}

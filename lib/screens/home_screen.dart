@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/area_code_service.dart';
@@ -18,8 +20,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final AuthService _authService = AuthService();
   final AreaCodeService _areaCodeService = AreaCodeService();
-  final GlobalKey<DataCollectionSectionState> _dataCollectionKey =
-      GlobalKey<DataCollectionSectionState>();
   final TextEditingController _stateController = TextEditingController();
   final TextEditingController _districtController = TextEditingController();
   final TextEditingController _talukController = TextEditingController();
@@ -44,10 +44,10 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoggedIn = false;
   bool _isLoading = true;
   String? _errorMessage;
-  bool _isGridConfigured = false;
   String? _selectedSamplingUnit;
   List<AreaCodeEntry> _areaCodeEntries = [];
   bool _isSyncingAreaCode = false;
+  List<Map<String, String>> _grids = [];
 
   static const List<String> _samplingUnits = [
     'Family',
@@ -78,7 +78,6 @@ class _HomeScreenState extends State<HomeScreen> {
         _isLoggedIn = _authService.currentSession != null;
         _selectedSamplingUnit ??= _samplingUnits.first;
         _initializeSetupDefaults();
-        _isGridConfigured = _isAreaCodeValidParts();
         _errorMessage = null;
         _isLoading = false;
       });
@@ -160,6 +159,7 @@ class _HomeScreenState extends State<HomeScreen> {
         prefs.getString('setup_cluster_code') ??
         '';
     _dateOfEntryController.text = prefs.getString('setup_date_of_entry') ?? '';
+    _grids = _decodeGrids(prefs.getString('setup_grids'));
   }
 
   Future<void> _saveSetupPreferences() async {
@@ -182,6 +182,33 @@ class _HomeScreenState extends State<HomeScreen> {
     await prefs.setString('setup_locality_code', _localityCodeController.text.trim());
     await prefs.setString('setup_area_suffix_code', _areaSuffixCodeController.text.trim());
     await prefs.setString('setup_date_of_entry', _dateOfEntryController.text.trim());
+    await prefs.setString('setup_grids', jsonEncode(_grids));
+  }
+
+  List<Map<String, String>> _decodeGrids(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return [];
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return [];
+      return decoded
+          .whereType<Map>()
+          .map(
+            (e) => e.map(
+              (key, value) => MapEntry(key.toString(), value?.toString() ?? ''),
+            ),
+          )
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  String _buildAreaCode() {
+    return '${_stateCodeController.text.trim()}-'
+        '${_districtCodeController.text.trim()}-'
+        '${_talukCodeController.text.trim()}-'
+        '${_localityCodeController.text.trim()}-'
+        '${_areaSuffixCodeController.text.trim()}';
   }
 
   String _areaSuffixTypeForSamplingUnit() {
@@ -660,8 +687,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       await _saveSetupPreferences();
                       if (!dialogContext.mounted || !mounted) return;
                       setState(() {
-                        _isGridConfigured = true;
+                        final gridId = DateTime.now().millisecondsSinceEpoch.toString();
+                        final areaCode = _buildAreaCode();
+                        _grids.add({
+                          'gridId': gridId,
+                          'samplingUnit': _selectedSamplingUnit ?? '',
+                          'state': _stateController.text.trim(),
+                          'district': _districtController.text.trim(),
+                          'taluk': _talukController.text.trim(),
+                          'areaCode': areaCode,
+                        });
                       });
+                      await _saveSetupPreferences();
                       Navigator.of(dialogContext).pop();
                       messenger.showSnackBar(
                         const SnackBar(content: Text('Set Grid saved.')),
@@ -695,26 +732,6 @@ class _HomeScreenState extends State<HomeScreen> {
           child: const Text('Set Grid'),
         ),
         actions: [
-          TextButton.icon(
-            onPressed: () async {
-              if (!_isGridConfigured) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Set Grid first.')),
-                );
-                return;
-              }
-              final state = _dataCollectionKey.currentState;
-              if (state == null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Data collection not ready yet.')),
-                );
-                return;
-              }
-              await state.uploadEntries();
-            },
-            icon: const Icon(Icons.cloud_upload),
-            label: const Text('Upload'),
-          ),
           if (_isLoggedIn)
             IconButton(
               icon: const Icon(Icons.logout),
@@ -764,30 +781,48 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
             const SizedBox(height: 16),
-            if (!_isGridConfigured)
-              const Expanded(
-                child: Center(
-                  child: Text('Tap Set Grid (top left) to start data collection.'),
-                ),
-              )
-            else
-              Expanded(
-                child: DataCollectionSection(
-                  key: _dataCollectionKey,
-                  samplingUnit: _selectedSamplingUnit ?? _samplingUnits.first,
-                  setupData: {
-                    'state': _stateController.text.trim(),
-                    'district': _districtController.text.trim(),
-                    'taluk': _talukController.text.trim(),
-                    'areaCode':
-                        '${_stateCodeController.text.trim()}-'
-                        '${_districtCodeController.text.trim()}-'
-                        '${_talukCodeController.text.trim()}-'
-                        '${_localityCodeController.text.trim()}-'
-                        '${_areaSuffixCodeController.text.trim()}',
-                  },
-                ),
-              ),
+            Expanded(
+              child: _grids.isEmpty
+                  ? const Center(
+                      child: Text('Tap Set Grid (top left) to add a grid.'),
+                    )
+                  : ListView.separated(
+                      itemCount: _grids.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final grid = _grids[index];
+                        return Card(
+                          child: ListTile(
+                            title: Text(
+                              grid['areaCode'] ?? '',
+                            ),
+                            subtitle: Text(
+                              'Sampling: ${grid['samplingUnit'] ?? ''} | '
+                              'Taluk: ${grid['taluk'] ?? ''}',
+                            ),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => DataCollectionScreen(
+                                    samplingUnit:
+                                        grid['samplingUnit'] ?? _samplingUnits.first,
+                                    setupData: {
+                                      'state': grid['state'] ?? '',
+                                      'district': grid['district'] ?? '',
+                                      'taluk': grid['taluk'] ?? '',
+                                      'areaCode': grid['areaCode'] ?? '',
+                                    },
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+            ),
             if (_role == 'admin')
               ElevatedButton(
                 onPressed: () {

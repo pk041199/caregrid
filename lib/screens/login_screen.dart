@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../controllers/auth_controller.dart';
 import '../services/auth_service.dart';
+import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,16 +22,29 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
     _authController = AuthController(AuthService());
     _authController.loadOrganizations();
+    if (AuthService().currentSession != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      });
+    }
   }
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
-    await _authController.signIn(
+    final success = await _authController.signIn(
       organizationId: _selectedOrganizationId ?? '',
       userId: _selectedUserId ?? '',
       password: _passwordController.text,
     );
+    if (success && mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+    }
   }
 
   Future<void> _showForgotPasswordDialog() async {
@@ -255,14 +269,44 @@ class _LoginScreenState extends State<LoginScreen> {
                       ? const CircularProgressIndicator()
                       : Column(
                           children: [
-                            ElevatedButton(
-                              onPressed: _login,
-                              child: const Text('Login'),
+                        ElevatedButton(
+                          onPressed: _login,
+                          child: const Text('Login'),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          children: [
+                            OutlinedButton(
+                              onPressed: () async {
+                                await _authController.signInDemo('Doctor');
+                                if (!mounted) return;
+                                Navigator.of(context).pushReplacement(
+                                  MaterialPageRoute(
+                                    builder: (_) => const HomeScreen(),
+                                  ),
+                                );
+                              },
+                              child: const Text('Demo Doctor'),
                             ),
-                            TextButton(
-                              onPressed: _showForgotPasswordDialog,
-                              child: const Text('Forgot Password'),
+                            OutlinedButton(
+                              onPressed: () async {
+                                await _authController.signInDemo('Field Staff');
+                                if (!mounted) return;
+                                Navigator.of(context).pushReplacement(
+                                  MaterialPageRoute(
+                                    builder: (_) => const HomeScreen(),
+                                  ),
+                                );
+                              },
+                              child: const Text('Demo Field Staff'),
                             ),
+                          ],
+                        ),
+                        TextButton(
+                          onPressed: _showForgotPasswordDialog,
+                          child: const Text('Forgot Password'),
+                        ),
                           ],
                         ),
                 ],

@@ -1,0 +1,134 @@
+{
+  "id": "anc",
+  "title": "Antenatal Care (ANC) Field Checklist",
+  "version": 1,
+  "followup": {
+    "enabled": true,
+    "defaultCycleDays": 30,
+    "cycleOptionsDays": [14, 30, 60]
+  },
+  "sections": [
+    {
+      "id": "identification",
+      "title": "Identification Details",
+      "showForVisitType": ["First"],
+      "fields": [
+        { "id": "name", "label": "Name", "type": "text", "required": false },
+        { "id": "age", "label": "Age", "type": "number", "required": false },
+        { "id": "phone", "label": "Phone", "type": "text", "required": false },
+        { "id": "mcp_card_no", "label": "MCP Card No", "type": "text", "required": false },
+        { "id": "gravida", "label": "Gravida", "type": "number", "required": false },
+        { "id": "para", "label": "Para", "type": "number", "required": false },
+        { "id": "living", "label": "Living", "type": "number", "required": false },
+        { "id": "abortions", "label": "Abortions", "type": "number", "required": false },
+        { "id": "lmp", "label": "LMP", "type": "date", "required": false },
+        { "id": "edd", "label": "EDD", "type": "date", "required": false },
+        { "id": "gestational_age_weeks", "label": "Gestational Age (weeks)", "type": "number", "required": false },
+        { "id": "trimester", "label": "Trimester", "type": "select", "options": ["I", "II", "III"], "required": false },
+        { "id": "anc_visits_total", "label": "Total ANC Visits Till Date", "type": "number", "required": false }
+      ]
+    },
+    {
+      "id": "present_complaints",
+      "title": "Present Complaints",
+      "showForVisitType": ["Follow-up"],
+      "fields": [
+        { "id": "complaints", "label": "Complaints", "type": "text", "required": false }
+      ]
+    },
+    {
+      "id": "risk_history",
+      "title": "Risk and Past History",
+      "showForVisitType": ["First"],
+      "fields": [
+        { "id": "previous_lscs", "label": "Previous LSCS", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "abortion_stillbirth", "label": "Abortion/Stillbirth", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "pph", "label": "PPH", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "preterm_delivery", "label": "Preterm Delivery", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "hypertension", "label": "Hypertension", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "diabetes", "label": "Diabetes", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "thyroid_disorder", "label": "Thyroid Disorder", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "tb", "label": "TB", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "rh_negative", "label": "Rh Negative", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "age_risk", "label": "Age <19 or >35", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "height_risk", "label": "Height <145 cm", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "high_risk", "label": "High Risk", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "high_risk_specify", "label": "If yes, specify", "type": "text", "required": false }
+      ]
+    },
+    {
+      "id": "examination",
+      "title": "Examination",
+      "showForVisitType": ["Follow-up"],
+      "fields": [
+        { "id": "weight_kg", "label": "Weight (kg)", "type": "number", "required": false },
+        { "id": "bp", "label": "BP", "type": "text", "required": false },
+        { "id": "pulse", "label": "Pulse/min", "type": "number", "required": false },
+        { "id": "pallor", "label": "Pallor", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "pedal_edema", "label": "Pedal Edema", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "fundal_height", "label": "Fundal Height (cm)", "type": "number", "required": false },
+        { "id": "fhs_heard", "label": "FHS Heard", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "fetal_movements", "label": "Fetal Movements", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "lie_presentation", "label": "Lie/Presentation", "type": "text", "required": false }
+      ]
+    },
+    {
+      "id": "investigations",
+      "title": "Investigations",
+      "showForVisitType": ["First"],
+      "fields": [
+        { "id": "hb", "label": "Hb (g/dL)", "type": "number", "required": false },
+        { "id": "blood_group_rh", "label": "Blood Group & Rh", "type": "text", "required": false },
+        { "id": "urine_albumin_sugar", "label": "Urine Albumin/Sugar", "type": "text", "required": false },
+        { "id": "blood_sugar", "label": "Blood Sugar", "type": "text", "required": false },
+        { "id": "hiv", "label": "HIV", "type": "text", "required": false },
+        { "id": "hbsag", "label": "HBsAg", "type": "text", "required": false },
+        { "id": "vdrl", "label": "VDRL", "type": "text", "required": false },
+        { "id": "gdm_screening", "label": "GDM Screening (24–28 weeks)", "type": "text", "required": false },
+        { "id": "dating_scan", "label": "Dating Scan", "type": "text", "required": false },
+        { "id": "nt_scan", "label": "NT Scan", "type": "text", "required": false },
+        { "id": "tiffa_scan", "label": "TIFFA Scan", "type": "text", "required": false },
+        { "id": "growth_scan", "label": "Growth Scan", "type": "text", "required": false }
+      ]
+    },
+    {
+      "id": "immunization",
+      "title": "Immunization and Supplements",
+      "showForVisitType": ["First", "Follow-up"],
+      "fields": [
+        { "id": "td1_date", "label": "Td-1 Date", "type": "date", "required": false },
+        { "id": "td2_date", "label": "Td-2 Date", "type": "date", "required": false },
+        { "id": "td_booster", "label": "Td Booster", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "ifa_given", "label": "IFA Given", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "calcium_given", "label": "Calcium Given", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "albendazole", "label": "Albendazole (After 1st Trimester)", "type": "select", "options": ["Yes", "No"], "required": false }
+      ]
+    },
+    {
+      "id": "counseling",
+      "title": "Counseling Provided",
+      "showForVisitType": ["Follow-up"],
+      "fields": [
+        { "id": "diet_advice", "label": "Diet Advice", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "danger_signs", "label": "Danger Signs Explained", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "birth_preparedness", "label": "Birth Preparedness", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "institutional_delivery", "label": "Institutional Delivery", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "family_planning", "label": "Family Planning", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "breastfeeding_advice", "label": "Breastfeeding Advice", "type": "select", "options": ["Yes", "No"], "required": false }
+      ]
+    },
+    {
+      "id": "follow_up",
+      "title": "Follow Up",
+      "showForVisitType": ["Follow-up"],
+      "fields": [
+        { "id": "next_visit_date", "label": "Next Visit Date", "type": "date", "required": false },
+        { "id": "referred", "label": "Referred", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "asha_informed", "label": "ASHA Informed", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "entry_in_anc_register", "label": "Entry in ANC Register", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "signature", "label": "Signature", "type": "text", "required": false },
+        { "id": "signature_date", "label": "Date", "type": "date", "required": false }
+      ]
+    }
+  ]
+}
