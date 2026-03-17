@@ -1,0 +1,19 @@
+{
+  "id": "rs_examination",
+  "title": "Respiratory System Examination",
+  "version": 1,
+  "followup": { "enabled": false },
+  "sections": [
+    {
+      "id": "resp",
+      "title": "Respiratory Findings",
+      "fields": [
+        { "id": "resp_rate", "label": "Respiratory Rate (/min)", "type": "number", "required": false, "validation": { "min": 5, "max": 80 } },
+        { "id": "air_entry", "label": "Air Entry", "type": "select", "required": false, "options": ["Bilateral equal", "Reduced", "Not assessed"] },
+        { "id": "wheeze", "label": "Wheeze", "type": "select", "required": false, "options": ["Present", "Absent"] },
+        { "id": "crepts", "label": "Crepitations", "type": "select", "required": false, "options": ["Present", "Absent"] },
+        { "id": "rs_notes", "label": "RS Notes", "type": "text", "required": false }
+      ]
+    }
+  ]
+}

@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/area_code_service.dart';
 import '../services/auth_service.dart';
+import '../services/medical_role_policy.dart';
 import 'admin_screen.dart';
 import 'code_master_management_screen.dart';
 import 'code_guide_screen.dart';
 import 'data_collection_screen.dart';
+import 'doctor_dashboard_screen.dart';
 import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -45,6 +47,8 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   String? _selectedSamplingUnit;
+  String? _selectedIndividualEntryPoint;
+  String _activeSamplingUnit = 'Family';
   List<AreaCodeEntry> _areaCodeEntries = [];
   bool _isSyncingAreaCode = false;
   List<Map<String, String>> _grids = [];
@@ -52,11 +56,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   static const List<String> _samplingUnits = [
     'Family',
-    'Person',
+    'Individual',
+    'Community',
+  ];
+  static const List<String> _individualEntryPoints = [
+    'PHC',
+    'UPHC',
     'Anganwadi',
     'School',
-    'Work Place',
-    'PHC Area',
+    'Workplace',
+    'Special Camp',
   ];
 
   @override
@@ -81,6 +90,8 @@ class _HomeScreenState extends State<HomeScreen> {
         _organizationName = _authService.currentOrganizationName;
         _isLoggedIn = session != null;
         _selectedSamplingUnit ??= _samplingUnits.first;
+        _selectedIndividualEntryPoint ??= _individualEntryPoints.first;
+        _activeSamplingUnit = _selectedSamplingUnit ?? _samplingUnits.first;
         _initializeSetupDefaults();
         _ensureDemoSampleGrid();
         _errorMessage = null;
@@ -149,7 +160,28 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadSetupPreferences() async {
     final prefs = await SharedPreferences.getInstance();
-    _selectedSamplingUnit = prefs.getString('setup_sampling_unit') ?? _selectedSamplingUnit;
+    final savedSampling = prefs.getString('setup_sampling_unit') ?? '';
+    if (savedSampling == 'Person') {
+      _selectedSamplingUnit = 'Individual';
+      _selectedIndividualEntryPoint = 'PHC';
+    } else if (savedSampling == 'Anganwadi' ||
+        savedSampling == 'School' ||
+        savedSampling == 'Work Place' ||
+        savedSampling == 'PHC Area') {
+      _selectedSamplingUnit = 'Individual';
+      if (savedSampling == 'Anganwadi') _selectedIndividualEntryPoint = 'Anganwadi';
+      if (savedSampling == 'School') _selectedIndividualEntryPoint = 'School';
+      if (savedSampling == 'Work Place') _selectedIndividualEntryPoint = 'Workplace';
+      if (savedSampling == 'PHC Area') _selectedIndividualEntryPoint = 'PHC';
+    } else {
+      _selectedSamplingUnit =
+          savedSampling.isEmpty ? _selectedSamplingUnit : savedSampling;
+    }
+    final savedPoint = prefs.getString('setup_individual_entry_point') ?? '';
+    if (savedPoint.isNotEmpty) {
+      _selectedIndividualEntryPoint = savedPoint;
+    }
+    _activeSamplingUnit = _selectedSamplingUnit ?? _samplingUnits.first;
     _stateController.text = prefs.getString('setup_state') ?? '';
     _districtController.text = prefs.getString('setup_district') ?? '';
     _talukController.text = prefs.getString('setup_taluk') ?? '';
@@ -175,6 +207,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _saveSetupPreferences() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('setup_sampling_unit', _selectedSamplingUnit ?? '');
+    await prefs.setString(
+      'setup_individual_entry_point',
+      _selectedIndividualEntryPoint ?? '',
+    );
     await prefs.setString('setup_state', _stateController.text.trim());
     await prefs.setString('setup_district', _districtController.text.trim());
     await prefs.setString('setup_taluk', _talukController.text.trim());
@@ -240,10 +276,24 @@ class _HomeScreenState extends State<HomeScreen> {
     _grids.removeWhere((g) => g['isSample'] == 'true');
   }
 
+  List<Map<String, String>> _filteredGrids() {
+    return _grids
+        .where((g) => (g['samplingUnit'] ?? '') == _activeSamplingUnit)
+        .toList();
+  }
+
+  void _setActiveSamplingUnit(String unit) {
+    setState(() {
+      _activeSamplingUnit = unit;
+      _selectedSamplingUnit = unit;
+    });
+  }
+
   String _areaSuffixTypeForSamplingUnit() {
     final unit = _selectedSamplingUnit ?? '';
-    if (unit == 'School') return 'school';
-    if (unit == 'Anganwadi') return 'anganwadi';
+    final point = _selectedIndividualEntryPoint ?? '';
+    if (unit == 'Individual' && point == 'School') return 'school';
+    if (unit == 'Individual' && point == 'Anganwadi') return 'anganwadi';
     return 'cluster';
   }
 
@@ -288,11 +338,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String _currentLocalityName() {
     final unit = _selectedSamplingUnit ?? '';
     if (unit == 'Family') return _villageController.text.trim();
-    if (unit == 'School' || unit == 'Work Place' || unit == 'Anganwadi') {
+    if (unit == 'Individual') {
       return _cityVillageController.text.trim();
-    }
-    if (unit == 'PHC Area') {
-      return _phcController.text.trim();
     }
     return _cityVillageController.text.trim();
   }
@@ -301,10 +348,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final unit = _selectedSamplingUnit ?? '';
     if (unit == 'Family') {
       _villageController.text = value;
-    } else if (unit == 'School' || unit == 'Work Place' || unit == 'Anganwadi') {
+    } else if (unit == 'Individual') {
       _cityVillageController.text = value;
-    } else if (unit == 'PHC Area') {
-      _phcController.text = value;
     } else {
       _cityVillageController.text = value;
     }
@@ -651,11 +696,12 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Widget> _buildLocationFieldsForStepper() {
     final samplingUnit = _selectedSamplingUnit ?? '';
     final isFamily = samplingUnit == 'Family';
-    final isPerson = samplingUnit == 'Person';
-    final isAnganwadi = samplingUnit == 'Anganwadi';
-    final isSchool = samplingUnit == 'School';
-    final isWorkPlace = samplingUnit == 'Work Place';
-    final isPhcArea = samplingUnit == 'PHC Area';
+    final isIndividual = samplingUnit == 'Individual';
+    final isCommunity = samplingUnit == 'Community';
+    final entryPoint = _selectedIndividualEntryPoint ?? _individualEntryPoints.first;
+    final isAnganwadiPoint = isIndividual && entryPoint == 'Anganwadi';
+    final isSchoolPoint = isIndividual && entryPoint == 'School';
+    final isWorkplacePoint = isIndividual && entryPoint == 'Workplace';
 
     final fields = <Widget>[
       TextField(
@@ -687,7 +733,7 @@ class _HomeScreenState extends State<HomeScreen> {
       const SizedBox(height: 12),
     ];
 
-    if (isFamily || isPerson || isPhcArea) {
+    if (isFamily || isIndividual) {
       fields.addAll([
         TextField(
           controller: _phcController,
@@ -695,6 +741,29 @@ class _HomeScreenState extends State<HomeScreen> {
             labelText: 'PHC',
             border: OutlineInputBorder(),
           ),
+        ),
+        const SizedBox(height: 12),
+      ]);
+    }
+
+    if (isIndividual) {
+      fields.addAll([
+        DropdownButtonFormField<String>(
+          initialValue: _selectedIndividualEntryPoint,
+          decoration: const InputDecoration(
+            labelText: 'Individual Entry Place',
+            border: OutlineInputBorder(),
+          ),
+          items: _individualEntryPoints
+              .map((e) => DropdownMenuItem<String>(value: e, child: Text(e)))
+              .toList(),
+          onChanged: (value) {
+            if (value == null) return;
+            setState(() {
+              _selectedIndividualEntryPoint = value;
+              _areaSuffixCodeController.clear();
+            });
+          },
         ),
         const SizedBox(height: 12),
       ]);
@@ -730,7 +799,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ]);
     }
 
-    if (isSchool || isWorkPlace || isAnganwadi) {
+    if (isIndividual) {
       fields.addAll([
         TextField(
           controller: _cityVillageController,
@@ -744,7 +813,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ]);
     }
 
-    if (isSchool) {
+    if (isSchoolPoint) {
       fields.addAll([
         TextField(
           controller: _schoolNameController,
@@ -757,7 +826,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ]);
     }
 
-    if (isAnganwadi) {
+    if (isAnganwadiPoint) {
       fields.addAll([
         TextField(
           controller: _anganwadiNameController,
@@ -770,13 +839,28 @@ class _HomeScreenState extends State<HomeScreen> {
       ]);
     }
 
-    if (isWorkPlace) {
+    if (isWorkplacePoint) {
       fields.addAll([
         TextField(
           controller: _workPlaceNameController,
           decoration: const InputDecoration(
             labelText: 'Workplace Name',
             border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 12),
+      ]);
+    }
+
+    if (isCommunity) {
+      fields.addAll([
+        const Card(
+          child: Padding(
+            padding: EdgeInsets.all(12),
+            child: Text(
+              'Community sampling is under development. '
+              'Grid can be saved; data collection will be enabled later.',
+            ),
           ),
         ),
         const SizedBox(height: 12),
@@ -831,11 +915,43 @@ class _HomeScreenState extends State<HomeScreen> {
                       if (value == null) return;
                       setState(() {
                         _selectedSamplingUnit = value;
+                        if (value == 'Individual') {
+                          _selectedIndividualEntryPoint ??=
+                              _individualEntryPoints.first;
+                        } else {
+                          _selectedIndividualEntryPoint = null;
+                        }
                         _areaSuffixCodeController.clear();
                       });
                       setModalState(() {});
                     },
                   ),
+                  if (_selectedSamplingUnit == 'Individual') ...[
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedIndividualEntryPoint,
+                      decoration: const InputDecoration(
+                        labelText: 'Individual Entry Place',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: _individualEntryPoints
+                          .map(
+                            (unit) => DropdownMenuItem<String>(
+                              value: unit,
+                              child: Text(unit),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() {
+                          _selectedIndividualEntryPoint = value;
+                          _areaSuffixCodeController.clear();
+                        });
+                        setModalState(() {});
+                      },
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   TextField(
                     controller: _dateOfEntryController,
@@ -973,6 +1089,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Sampling Unit: ${_selectedSamplingUnit ?? ''}'),
+                      if ((_selectedIndividualEntryPoint ?? '').isNotEmpty)
+                        Text('Entry Place: ${_selectedIndividualEntryPoint ?? ''}'),
                       Text('State: ${_stateController.text.trim()}'),
                       Text('District: ${_districtController.text.trim()}'),
                       Text('Taluk: ${_talukController.text.trim()}'),
@@ -1058,6 +1176,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 _grids.add({
                                   'gridId': gridId,
                                   'samplingUnit': _selectedSamplingUnit ?? '',
+                                  'entryPlace':
+                                      _selectedIndividualEntryPoint ?? '',
                                   'state': _stateController.text.trim(),
                                   'district': _districtController.text.trim(),
                                   'taluk': _talukController.text.trim(),
@@ -1098,7 +1218,7 @@ class _HomeScreenState extends State<HomeScreen> {
         leadingWidth: 96,
         leading: TextButton(
           onPressed: _openStartDataCollectionSetup,
-          child: const Text('Set Grid'),
+          child: Text('Set ${_activeSamplingUnit}'),
         ),
         actions: [
           if (_isLoggedIn)
@@ -1139,7 +1259,8 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 8),
             if (_name != null) Text('User: $_name'),
             if (_organizationName != null) Text('Organization: $_organizationName'),
-            if (_role != null) Text('Role: $_role'),
+            if (_role != null)
+              Text('Role: ${MedicalRolePolicy.label(_role)} (${_role ?? ''})'),
             if (_errorMessage != null) ...[
               const SizedBox(height: 10),
               Text(
@@ -1148,16 +1269,62 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
             const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Choose Program',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      children: _samplingUnits
+                          .map(
+                            (unit) => ChoiceChip(
+                              label: Text(unit),
+                              selected: _activeSamplingUnit == unit,
+                              onSelected: (_) => _setActiveSamplingUnit(unit),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (MedicalRolePolicy.canReviewClinical(_role)) ...[
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const DoctorDashboardScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.medical_services_outlined),
+                  label: const Text('Open Doctor Dashboard'),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             Expanded(
-              child: _grids.isEmpty
+              child: _filteredGrids().isEmpty
                   ? const Center(
-                      child: Text('Tap Set Grid (top left) to add a grid.'),
+                      child: Text('No grids yet for this program. Tap Set to add.'),
                     )
                   : ListView.separated(
-                      itemCount: _grids.length,
+                      itemCount: _filteredGrids().length,
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
-                        final grid = _grids[index];
+                        final grid = _filteredGrids()[index];
                         return Card(
                           child: ListTile(
                             title: Text(
@@ -1165,10 +1332,21 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             subtitle: Text(
                               'Sampling: ${grid['samplingUnit'] ?? ''} | '
+                              '${(grid['entryPlace'] ?? '').isNotEmpty ? 'Entry: ${grid['entryPlace']} | ' : ''}'
                               'Taluk: ${grid['taluk'] ?? ''}',
                             ),
                             trailing: const Icon(Icons.chevron_right),
                             onTap: () {
+                              if ((grid['samplingUnit'] ?? '') == 'Community') {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Community workflow is under development.',
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -1180,6 +1358,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       'district': grid['district'] ?? '',
                                       'taluk': grid['taluk'] ?? '',
                                       'areaCode': grid['areaCode'] ?? '',
+                                      'entryPlace': grid['entryPlace'] ?? '',
                                     },
                                   ),
                                 ),
@@ -1190,7 +1369,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                     ),
             ),
-            if (_role == 'admin')
+            if (MedicalRolePolicy.canOpenAdminPanel(_role))
               ElevatedButton(
                 onPressed: () {
                   Navigator.push(

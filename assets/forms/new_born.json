@@ -9,12 +9,21 @@
   },
   "sections": [
     {
+      "id": "mcp_reference",
+      "title": "MCP Card Reference",
+      "fields": [
+        { "id": "mcp_card_available", "label": "MCP Card Available", "type": "select", "required": true, "options": ["Yes", "No"] },
+        { "id": "mcp_card_number", "label": "MCP Card Number", "type": "text", "required": false },
+        { "id": "mcp_last_updated_on", "label": "Last MCP Entry Date", "type": "date", "required": false }
+      ]
+    },
+    {
       "id": "newborn_profile",
       "title": "New Born Profile",
       "fields": [
-        { "id": "baby_name", "label": "Baby Name", "type": "text", "required": false },
-        { "id": "dob", "label": "Date of Birth", "type": "date", "required": false },
-        { "id": "birth_weight", "label": "Birth Weight (kg)", "type": "number", "required": false },
+        { "id": "baby_name", "label": "Baby Name", "type": "text", "required": true },
+        { "id": "dob", "label": "Date of Birth", "type": "date", "required": true },
+        { "id": "birth_weight", "label": "Birth Weight (kg)", "type": "number", "required": true },
         { "id": "delivery_place", "label": "Delivery Place", "type": "text", "required": false }
       ]
     },
@@ -22,7 +31,7 @@
       "id": "newborn_exam",
       "title": "Assessment",
       "fields": [
-        { "id": "feeding", "label": "Feeding Well", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "feeding", "label": "Feeding Well", "type": "select", "options": ["Yes", "No"], "required": true },
         { "id": "urine_output", "label": "Urine Passed", "type": "select", "options": ["Yes", "No"], "required": false },
         { "id": "stool_output", "label": "Stool Passed", "type": "select", "options": ["Yes", "No"], "required": false },
         { "id": "jaundice", "label": "Jaundice", "type": "select", "options": ["Yes", "No"], "required": false },
@@ -33,7 +42,7 @@
       "id": "follow_up",
       "title": "Follow Up",
       "fields": [
-        { "id": "next_visit_date", "label": "Next Visit Date", "type": "date", "required": false },
+        { "id": "next_visit_date", "label": "Next Visit Date", "type": "date", "required": true },
         { "id": "remarks", "label": "Remarks", "type": "text", "required": false }
       ]
     }

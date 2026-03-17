@@ -1,83 +1,54 @@
 {
   "id": "nutritional_history_family",
-  "title": "Nutritional History (Family Monthly Consumption)",
-  "version": 1,
-  "followup": { "enabled": false },
+  "title": "Family Nutrition Agenda (Monthly Consumption)",
+  "version": 2,
+  "followup": {
+    "enabled": true,
+    "defaultCycleDays": 90,
+    "cycleOptionsDays": [30, 90, 180]
+  },
   "sections": [
     {
-      "id": "monthly_consumption",
-      "title": "Monthly Consumption",
+      "id": "food_budget_access",
+      "title": "1. Food Access and Budget",
       "fields": [
-        {
-          "id": "cereals_kg",
-          "label": "Cereals (kg/month)",
-          "type": "number",
-          "required": false,
-          "validation": { "min": 0, "max": 200 }
-        },
-        {
-          "id": "pulses_kg",
-          "label": "Pulses (kg/month)",
-          "type": "number",
-          "required": false,
-          "validation": { "min": 0, "max": 100 }
-        },
-        {
-          "id": "vegetables_kg",
-          "label": "Vegetables (kg/month)",
-          "type": "number",
-          "required": false,
-          "validation": { "min": 0, "max": 300 }
-        },
-        {
-          "id": "fruits_kg",
-          "label": "Fruits (kg/month)",
-          "type": "number",
-          "required": false,
-          "validation": { "min": 0, "max": 200 }
-        },
-        {
-          "id": "milk_l",
-          "label": "Milk (litres/month)",
-          "type": "number",
-          "required": false,
-          "validation": { "min": 0, "max": 300 }
-        },
-        {
-          "id": "eggs_count",
-          "label": "Eggs (count/month)",
-          "type": "number",
-          "required": false,
-          "validation": { "min": 0, "max": 2000 }
-        },
-        {
-          "id": "meat_kg",
-          "label": "Meat/Fish (kg/month)",
-          "type": "number",
-          "required": false,
-          "validation": { "min": 0, "max": 100 }
-        },
-        {
-          "id": "oil_l",
-          "label": "Edible Oil (litres/month)",
-          "type": "number",
-          "required": false,
-          "validation": { "min": 0, "max": 50 }
-        },
-        {
-          "id": "sugar_kg",
-          "label": "Sugar (kg/month)",
-          "type": "number",
-          "required": false,
-          "validation": { "min": 0, "max": 50 }
-        },
-        {
-          "id": "iodized_salt",
-          "label": "Iodized Salt Used",
-          "type": "select",
-          "required": false,
-          "options": ["Yes", "No", "Unknown"]
-        }
+        { "id": "family_size", "label": "Family Size", "type": "number", "required": false, "validation": { "min": 1, "max": 30 } },
+        { "id": "food_insecurity", "label": "Food Insecurity in Last Month", "type": "select", "required": false, "options": ["No", "Occasional", "Frequent"] },
+        { "id": "ration_support", "label": "PDS / Ration Support", "type": "select", "required": false, "options": ["Regular", "Irregular", "None"] }
+      ]
+    },
+    {
+      "id": "monthly_consumption",
+      "title": "2. Monthly Consumption",
+      "fields": [
+        { "id": "cereals_kg", "label": "Cereals (kg/month)", "type": "number", "required": false, "validation": { "min": 0, "max": 200 } },
+        { "id": "pulses_kg", "label": "Pulses (kg/month)", "type": "number", "required": false, "validation": { "min": 0, "max": 100 } },
+        { "id": "vegetables_kg", "label": "Vegetables (kg/month)", "type": "number", "required": false, "validation": { "min": 0, "max": 300 } },
+        { "id": "fruits_kg", "label": "Fruits (kg/month)", "type": "number", "required": false, "validation": { "min": 0, "max": 200 } },
+        { "id": "milk_l", "label": "Milk (litres/month)", "type": "number", "required": false, "validation": { "min": 0, "max": 300 } },
+        { "id": "eggs_count", "label": "Eggs (count/month)", "type": "number", "required": false, "validation": { "min": 0, "max": 2000 } },
+        { "id": "meat_kg", "label": "Meat/Fish (kg/month)", "type": "number", "required": false, "validation": { "min": 0, "max": 100 } },
+        { "id": "oil_l", "label": "Edible Oil (litres/month)", "type": "number", "required": false, "validation": { "min": 0, "max": 50 } },
+        { "id": "sugar_kg", "label": "Sugar (kg/month)", "type": "number", "required": false, "validation": { "min": 0, "max": 50 } }
+      ]
+    },
+    {
+      "id": "quality_practices",
+      "title": "3. Nutrition Quality and Practices",
+      "fields": [
+        { "id": "iodized_salt", "label": "Iodized Salt Used", "type": "select", "required": false, "options": ["Yes", "No", "Unknown"] },
+        { "id": "ultra_processed_frequency", "label": "Ultra-processed Foods Frequency", "type": "select", "required": false, "options": ["Low", "Moderate", "High"] },
+        { "id": "child_feeding_concern", "label": "Any Child Feeding Concern", "type": "textarea", "required": false },
+        { "id": "special_diet_member", "label": "Any Member on Special Diet", "type": "textarea", "required": false }
+      ]
+    },
+    {
+      "id": "nutrition_plan",
+      "title": "4. Nutrition Plan",
+      "fields": [
+        { "id": "priority_nutrition_issue", "label": "Priority Nutrition Issue", "type": "textarea", "required": false },
+        { "id": "dietary_advice_given", "label": "Dietary Advice Given", "type": "textarea", "required": false },
+        { "id": "next_review_date", "label": "Next Review Date", "type": "date", "required": false }
       ]
     }
   ]

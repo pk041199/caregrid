@@ -1,0 +1,26 @@
+{
+  "id": "anemia_screening",
+  "title": "Anemia Screening",
+  "version": 1,
+  "followup": { "enabled": false },
+  "sections": [
+    {
+      "id": "history",
+      "title": "Screening History",
+      "fields": [
+        { "id": "fatigue", "label": "Fatigue", "type": "select", "required": false, "options": ["Yes", "No"] },
+        { "id": "dizziness", "label": "Dizziness", "type": "select", "required": false, "options": ["Yes", "No"] },
+        { "id": "pallor_noted", "label": "Pallor Noted", "type": "select", "required": false, "options": ["Yes", "No"] }
+      ]
+    },
+    {
+      "id": "measurement",
+      "title": "Measurement",
+      "fields": [
+        { "id": "hb_value", "label": "Hemoglobin (g/dL)", "type": "number", "required": false, "validation": { "min": 3, "max": 22 } },
+        { "id": "severity", "label": "Severity", "type": "select", "required": false, "options": ["Normal", "Mild", "Moderate", "Severe"] },
+        { "id": "advice", "label": "Advice", "type": "text", "required": false }
+      ]
+    }
+  ]
+}

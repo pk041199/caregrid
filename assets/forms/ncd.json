@@ -1,7 +1,7 @@
 {
   "id": "ncd",
-  "title": "NCD Screening",
-  "version": 1,
+  "title": "NCD Screening and Follow-up (Agenda-Based)",
+  "version": 2,
   "followup": {
     "enabled": true,
     "defaultCycleDays": 90,
@@ -9,30 +9,48 @@
   },
   "sections": [
     {
-      "id": "risk_factors",
-      "title": "Risk Factors",
+      "id": "visit_agenda",
+      "title": "1. Visit Agenda",
       "fields": [
-        { "id": "tobacco_use", "label": "Tobacco Use", "type": "select", "required": false, "options": ["Never", "Former", "Current"] },
-        { "id": "alcohol_use", "label": "Alcohol Use", "type": "select", "required": false, "options": ["Never", "Former", "Current"] },
-        { "id": "physical_activity", "label": "Physical Activity", "type": "select", "required": false, "options": ["Adequate", "Inadequate", "Unknown"] }
+        { "id": "visit_reason", "label": "Reason for NCD Visit", "type": "text", "required": false },
+        { "id": "symptom_change", "label": "Any Symptom Change Since Last Visit", "type": "textarea", "required": false }
       ]
     },
     {
-      "id": "screening",
-      "title": "Screening",
+      "id": "risk_profile",
+      "title": "2. Risk Profile",
       "fields": [
+        { "id": "tobacco_use", "label": "Tobacco Use", "type": "select", "required": false, "options": ["Never", "Former", "Current"] },
+        { "id": "alcohol_use", "label": "Alcohol Use", "type": "select", "required": false, "options": ["Never", "Former", "Current"] },
+        { "id": "physical_activity", "label": "Physical Activity", "type": "select", "required": false, "options": ["Adequate", "Inadequate", "Unknown"] },
+        { "id": "diet_pattern", "label": "Diet Pattern Risk", "type": "select", "required": false, "options": ["Low", "Moderate", "High"] },
+        { "id": "family_history_ncd", "label": "Family History of NCD", "type": "select", "required": false, "options": ["Yes", "No", "Unknown"] }
+      ]
+    },
+    {
+      "id": "measurements",
+      "title": "3. Measurements",
+      "fields": [
+        { "id": "weight_kg", "label": "Weight (kg)", "type": "number", "required": false, "validation": { "min": 20, "max": 250 } },
+        { "id": "height_cm", "label": "Height (cm)", "type": "number", "required": false, "validation": { "min": 80, "max": 250 } },
+        { "id": "waist_cm", "label": "Waist Circumference (cm)", "type": "number", "required": false, "validation": { "min": 30, "max": 200 } },
         { "id": "bp_systolic", "label": "BP Systolic", "type": "number", "required": false, "validation": { "min": 60, "max": 260 } },
         { "id": "bp_diastolic", "label": "BP Diastolic", "type": "number", "required": false, "validation": { "min": 30, "max": 160 } },
-        { "id": "fbs", "label": "Fasting Blood Sugar (mg/dL)", "type": "number", "required": false, "validation": { "min": 40, "max": 400 } },
+        { "id": "fbs", "label": "Fasting Blood Sugar (mg/dL)", "type": "number", "required": false, "validation": { "min": 40, "max": 450 } },
         { "id": "rbs", "label": "Random Blood Sugar (mg/dL)", "type": "number", "required": false, "validation": { "min": 40, "max": 600 } }
       ]
     },
     {
-      "id": "diagnosis",
-      "title": "Provisional Diagnosis",
+      "id": "assessment_and_plan",
+      "title": "4. Assessment and Plan",
       "fields": [
-        { "id": "htn", "label": "Hypertension", "type": "select", "required": false, "options": ["Yes", "No", "Suspected"] },
-        { "id": "dm", "label": "Diabetes Mellitus", "type": "select", "required": false, "options": ["Yes", "No", "Suspected"] }
+        { "id": "htn_status", "label": "Hypertension Status", "type": "select", "required": false, "options": ["Known Case", "New Suspected", "No"] },
+        { "id": "dm_status", "label": "Diabetes Status", "type": "select", "required": false, "options": ["Known Case", "New Suspected", "No"] },
+        { "id": "complication_screen", "label": "Complication Warning Signs", "type": "textarea", "required": false },
+        { "id": "drug_adherence", "label": "Drug Adherence", "type": "select", "required": false, "options": ["Good", "Partial", "Poor", "Not on treatment"] },
+        { "id": "lifestyle_advice", "label": "Lifestyle Advice Given", "type": "textarea", "required": false },
+        { "id": "next_visit_date", "label": "Next Visit Date", "type": "date", "required": false },
+        { "id": "referral_needed", "label": "Referral Needed", "type": "select", "required": false, "options": ["No", "Yes"] }
       ]
     }
   ]

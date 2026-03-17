@@ -1,0 +1,19 @@
+{
+  "id": "cns_examination",
+  "title": "CNS Examination",
+  "version": 1,
+  "followup": { "enabled": false },
+  "sections": [
+    {
+      "id": "cns",
+      "title": "Neurological Findings",
+      "fields": [
+        { "id": "higher_functions", "label": "Higher Functions", "type": "select", "required": false, "options": ["Normal", "Abnormal", "Not assessed"] },
+        { "id": "motor_power", "label": "Motor Power", "type": "select", "required": false, "options": ["Normal", "Reduced", "Not assessed"] },
+        { "id": "sensory", "label": "Sensory Exam", "type": "select", "required": false, "options": ["Normal", "Abnormal", "Not assessed"] },
+        { "id": "reflexes", "label": "Reflexes", "type": "select", "required": false, "options": ["Normal", "Abnormal", "Not assessed"] },
+        { "id": "cns_notes", "label": "CNS Notes", "type": "text", "required": false }
+      ]
+    }
+  ]
+}

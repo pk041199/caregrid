@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
 import 'form_viewer_screen.dart';
 import 'follow_up_dashboard_screen.dart';
+import 'individual_data_collection_screen.dart';
 import 'individual_profile_screen.dart';
 import 'widgets/data_collection_widgets.dart';
 import '../services/auth_service.dart';
@@ -35,23 +36,43 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.samplingUnit == 'Individual') {
+      return IndividualDataCollectionScreen(
+        samplingUnit: widget.samplingUnit,
+        setupData: widget.setupData,
+      );
+    }
+    if (widget.samplingUnit == 'Community') {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Data Collection')),
+        body: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Text(
+              'Community data collection workflow is under development.',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         title: const Text('Data Collection'),
         actions: [
-          TextButton.icon(
+          IconButton(
             onPressed: _openFollowUpDashboard,
             icon: const Icon(Icons.event_note_outlined),
-            label: const Text('Follow-ups'),
+            tooltip: 'Follow-ups',
           ),
-          TextButton.icon(
+          IconButton(
             onPressed: () async {
               final state = _sectionKey.currentState;
               if (state == null) return;
               await state.uploadEntries();
             },
             icon: const Icon(Icons.cloud_upload),
-            label: const Text('Upload'),
+            tooltip: 'Upload',
           ),
         ],
       ),
@@ -81,6 +102,11 @@ class _DataCollectionScreenState extends State<DataCollectionScreen> {
           setupData: widget.setupData,
           onEntriesChanged: (updated) {
             _sectionKey.currentState?.replaceRevisitEntries(updated);
+          },
+          onOpenFollowUpForm: (row) async {
+            final handler = _sectionKey.currentState;
+            if (handler == null) return false;
+            return handler.openFollowUpFromDashboard(row);
           },
         ),
       ),
@@ -155,39 +181,38 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
   ];
 
   static const List<String> _familyFormAssets = [
-    'assets/forms/nutritional_history_family.json',
-    'assets/forms/environmental_history_family.json',
+    'assets/forms/clinical_history.json',
   ];
 
   static const List<String> _memberFormAssets = [
     'assets/forms/clinical_history.json',
-    'assets/forms/smoking_history.json',
-    'assets/forms/occupational_history.json',
-    'assets/forms/reproductive_history.json',
-    'assets/forms/contraceptive_history.json',
+    'assets/forms/ncd.json',
     'assets/forms/anc.json',
     'assets/forms/pnc.json',
     'assets/forms/new_born.json',
     'assets/forms/under_5.json',
-    'assets/forms/ncd.json',
-    'assets/forms/diet_recall_24h_individual.json',
+  ];
+
+  static const List<String> _followUpFormIds = [
+    'anc',
+    'pnc',
+    'new_born',
   ];
 
   static const Map<String, String> _formIdToAsset = {
     'clinical_history': 'assets/forms/clinical_history.json',
-    'smoking_history': 'assets/forms/smoking_history.json',
-    'occupational_history': 'assets/forms/occupational_history.json',
-    'reproductive_history': 'assets/forms/reproductive_history.json',
-    'contraceptive_history': 'assets/forms/contraceptive_history.json',
+    'clinical_history_ncd': 'assets/forms/clinical_history_ncd.json',
+    'ncd': 'assets/forms/ncd.json',
     'anc': 'assets/forms/anc.json',
     'pnc': 'assets/forms/pnc.json',
     'new_born': 'assets/forms/new_born.json',
     'under_5': 'assets/forms/under_5.json',
-    'ncd': 'assets/forms/ncd.json',
-    'diet_recall_24h': 'assets/forms/diet_recall_24h_individual.json',
   };
 
   final AuthService _authService = AuthService();
+  bool get _isIndividualFlow => widget.samplingUnit == 'Individual';
+  bool get _isCommunityFlow => widget.samplingUnit == 'Community';
+  String get _entryPlace => (widget.setupData['entryPlace'] ?? '').trim();
 
   @override
   void initState() {
@@ -201,12 +226,26 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
     return 'caregrid_${area}_${sampling}_$suffix';
   }
 
+  String _legacyStorageKey(String suffix) {
+    final area = (widget.setupData['areaCode'] ?? 'NA').trim();
+    final sampling = widget.samplingUnit.trim();
+    return 'caregrid_${area}_${sampling}\\_$suffix';
+  }
+
   Future<void> _restoreLocalState() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final rawFamilies = prefs.getString(_storageKey('families')) ?? '';
-      final rawRevisits = prefs.getString(_storageKey('revisits')) ?? '';
-      final savedCounter = prefs.getInt(_storageKey('family_counter'));
+      var rawFamilies = prefs.getString(_storageKey('families')) ?? '';
+      var rawRevisits = prefs.getString(_storageKey('revisits')) ?? '';
+      var savedCounter = prefs.getInt(_storageKey('family_counter'));
+
+      if (rawFamilies.trim().isEmpty) {
+        rawFamilies = prefs.getString(_legacyStorageKey('families')) ?? '';
+      }
+      if (rawRevisits.trim().isEmpty) {
+        rawRevisits = prefs.getString(_legacyStorageKey('revisits')) ?? '';
+      }
+      savedCounter ??= prefs.getInt(_legacyStorageKey('family_counter'));
 
       if (savedCounter != null && savedCounter > 0) {
         _familyCounter = savedCounter;
@@ -256,10 +295,13 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
 
   void _seedSampleFamilyEntry() {
     if (_familyEntries.isNotEmpty) return;
+    if (_isCommunityFlow) return;
     final areaCode = (widget.setupData['areaCode'] ?? 'NA')
         .replaceAll('-', '')
         .replaceAll(' ', '');
-    final sampleFamilyId = 'FAM-$areaCode-001';
+    final sampleFamilyId = _isIndividualFlow
+        ? 'IND-$areaCode-001'
+        : 'FAM-$areaCode-001';
     final sampleFamilyUuid = _generateUuid();
     final sampleQr = 'https://caregrid.app/family/$sampleFamilyUuid';
     _familyEntries.add({
@@ -268,16 +310,16 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
       'familyLocation': 'Sample Street, Ward 3',
       'gps': '',
       'qrValue': sampleQr,
-      'familyType': 'New',
+      'familyType': _isIndividualFlow ? 'Individual' : 'New',
       'linkedFamilyId': '',
       'gpsCaptured': false,
       'familyStatus': 'Active',
-      'memberCount': '2',
+      'memberCount': _isIndividualFlow ? '1' : '2',
       'members': [
         {
           'personUuid': _generateUuid(),
           'fullName': 'Sample Head',
-          'relationship': 'Head',
+          'relationship': _isIndividualFlow ? 'Self' : 'Head',
           'sex': 'Male',
           'dob': '1990-01-01',
           'age': '34',
@@ -292,8 +334,12 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
           'presentingComplaints': jsonEncode(['Headache', 'Giddiness']),
           'currentMedicationsList': jsonEncode(['Amlodipine 5 mg OD']),
           'allergyHistoryList': jsonEncode(['No known drug allergy']),
+          'contactPhone': '9000000001',
+          'aadhaar': '',
+          'abha': '',
         },
-        {
+        if (!_isIndividualFlow)
+          {
           'personUuid': _generateUuid(),
           'fullName': 'Sample Member',
           'relationship': 'Spouse',
@@ -341,9 +387,12 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
               }
             }
           ]),
-        },
+          },
       ],
     });
+    if (_isIndividualFlow) {
+      return;
+    }
     _addRevisitEntry(
       familyId: sampleFamilyId,
       memberName: 'Sample Head',
@@ -392,6 +441,104 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
     }
   }
 
+  Future<bool> openFollowUpFromDashboard(Map<String, String> row) async {
+    final formId = (row['formId'] ?? '').trim();
+    if (formId.isEmpty) return false;
+    final assetPath = _formIdToAsset[formId];
+    if (assetPath == null || assetPath.isEmpty) return false;
+
+    Map<String, dynamic> formMeta = {'id': formId, 'title': formId.toUpperCase()};
+    try {
+      final jsonStr = await rootBundle.loadString(assetPath);
+      final parsed = jsonDecode(jsonStr);
+      if (parsed is Map<String, dynamic>) {
+        formMeta = parsed;
+      }
+    } catch (_) {}
+
+    final familyId = (row['familyId'] ?? '').trim();
+    final memberName = (row['memberName'] ?? '').trim();
+    final scope = (row['scope'] ?? '').trim().toLowerCase();
+    final isFamilyScope = scope == 'family' || memberName.toLowerCase() == 'family';
+    if (familyId.isEmpty) return false;
+
+    Map<String, dynamic>? family;
+    for (final f in _familyEntries) {
+      if ((f['familyId'] ?? '').toString().trim() == familyId) {
+        family = f;
+        break;
+      }
+    }
+    if (family == null) return false;
+
+    if (isFamilyScope) {
+      if (!mounted) return false;
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => FormViewerScreen(
+            assetPath: assetPath,
+            entityLabel: familyId,
+          ),
+        ),
+      );
+      final parsedResult = result is Map<String, dynamic> ? result : null;
+      final follow = _resolveFollowUpDate(formMeta, parsedResult);
+      if (follow.isNotEmpty) {
+        _addRevisitEntry(
+          familyId: familyId,
+          memberName: 'Family',
+          formId: formId,
+          formTitle:
+              (parsedResult?['formTitle'] ?? formMeta['title'] ?? '').toString(),
+          followUpDate: follow,
+          scope: 'Family',
+        );
+      }
+      if (mounted) setState(() {});
+      _persistLocalState();
+      return true;
+    }
+
+    final members = family['members'] as List<Map<String, String>>? ?? const [];
+    Map<String, String>? targetMember;
+    for (final m in members) {
+      if ((m['fullName'] ?? '').trim() == memberName) {
+        targetMember = m;
+        break;
+      }
+    }
+    targetMember ??= members.isNotEmpty ? members.first : null;
+    if (targetMember == null) return false;
+
+    if (!mounted) return false;
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FormViewerScreen(
+          assetPath: assetPath,
+          entityLabel: '${targetMember!['fullName'] ?? ''} ($familyId)',
+          contextData: {
+            'ancHistory': targetMember['ancHistory'],
+            'ancBaseline': targetMember['ancBaseline'],
+            'previousEntries': _clinicalNcdHistoryForMember(targetMember),
+            'sameDayForms': _sameDaySubmissionForMember(targetMember),
+          },
+        ),
+      ),
+    );
+
+    _handleMemberFormResult(
+      family: family,
+      member: targetMember,
+      form: formMeta,
+      result: result is Map<String, dynamic> ? result : null,
+    );
+    if (mounted) setState(() {});
+    _persistLocalState();
+    return true;
+  }
+
   void _addRevisitEntry({
     required String familyId,
     required String memberName,
@@ -401,6 +548,24 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
     String scope = 'Individual',
   }) {
     if (followUpDate.trim().isEmpty) return;
+    final key = [
+      familyId.trim(),
+      memberName.trim(),
+      formId.trim(),
+      followUpDate.trim(),
+      scope.trim(),
+    ].join('|');
+    final exists = _revisitEntries.any((e) {
+      final existingKey = [
+        (e['familyId'] ?? '').trim(),
+        (e['memberName'] ?? '').trim(),
+        (e['formId'] ?? '').trim(),
+        (e['followUpDate'] ?? '').trim(),
+        (e['scope'] ?? '').trim(),
+      ].join('|');
+      return existingKey == key;
+    });
+    if (exists) return;
     final category = formId == 'under_5'
         ? 'Under-5'
         : formId == 'new_born'
@@ -423,6 +588,7 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
     Map<String, dynamic> form,
     Map<String, dynamic>? result,
   ) {
+    if (result?['followUpSkipped'] == true) return '';
     final explicit = (result?['followUpDate'] ?? '').toString().trim();
     if (explicit.isNotEmpty) return explicit;
     final followUp = form['followup'];
@@ -452,7 +618,44 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
         .replaceAll(' ', '');
     final suffix = _familyCounter.toString().padLeft(3, '0');
     _familyCounter += 1;
-    return 'FAM-$areaCode-$suffix';
+    final prefix = _isIndividualFlow ? 'IND' : 'FAM';
+    return '$prefix-$areaCode-$suffix';
+  }
+
+  String _normalizeIdentifier(String value) {
+    return value.trim().toLowerCase();
+  }
+
+  Map<String, String>? _findLinkedEntity({
+    String? phone,
+    String? aadhaar,
+    String? abha,
+  }) {
+    final p = _normalizeIdentifier(phone ?? '');
+    final a = _normalizeIdentifier(aadhaar ?? '');
+    final b = _normalizeIdentifier(abha ?? '');
+    if (p.isEmpty && a.isEmpty && b.isEmpty) return null;
+
+    for (final family in _familyEntries) {
+      final familyId = (family['familyId'] ?? '').toString();
+      final members = family['members'] as List<Map<String, String>>? ?? const [];
+      for (final member in members) {
+        final mp = _normalizeIdentifier(member['contactPhone'] ?? '');
+        final ma = _normalizeIdentifier(member['aadhaar'] ?? '');
+        final mb = _normalizeIdentifier(member['abha'] ?? '');
+        final matches = (p.isNotEmpty && p == mp) ||
+            (a.isNotEmpty && a == ma) ||
+            (b.isNotEmpty && b == mb);
+        if (matches) {
+          return {
+            'familyId': familyId,
+            'personUuid': member['personUuid'] ?? '',
+            'memberName': member['fullName'] ?? '',
+          };
+        }
+      }
+    }
+    return null;
   }
 
   String _generateUuid() {
@@ -472,24 +675,29 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
     final sex = (member['sex'] ?? '').toLowerCase().trim();
     final pregnancy = (member['pregnancyStatus'] ?? '').toLowerCase().trim();
     final age = int.tryParse((member['age'] ?? '').trim()) ?? 0;
-    final allowed = _formIdToAsset.keys.toSet();
+    final allowed = <String>{
+      'clinical_history',
+      'ncd',
+      'anc',
+      'pnc',
+      'new_born',
+      'under_5',
+    };
 
     if (age < 10) {
-      allowed.remove('smoking_history');
-      allowed.remove('contraceptive_history');
-      allowed.remove('reproductive_history');
       allowed.remove('anc');
       allowed.remove('pnc');
+      allowed.remove('ncd');
     }
 
     if (sex != 'female') {
       allowed.remove('anc');
       allowed.remove('pnc');
-      allowed.remove('reproductive_history');
-      allowed.remove('contraceptive_history');
+      allowed.remove('new_born');
     } else {
       if (pregnancy != 'pregnant') {
         allowed.remove('anc');
+        allowed.remove('new_born');
       }
       if (pregnancy != 'postpartum') {
         allowed.remove('pnc');
@@ -500,14 +708,130 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
 
   List<String> _memberAssetsFor(Map<String, String> member) {
     final allowed = _allowedMemberFormIds(member).toSet();
+    final placeAllowed = _allowedFormIdsByEntryPlace();
     return _memberFormAssets.where((asset) {
       final matched = _formIdToAsset.entries
           .where((e) => e.value == asset)
           .map((e) => e.key)
           .toList();
       if (matched.isEmpty) return true;
-      return allowed.contains(matched.first);
+      return allowed.contains(matched.first) && placeAllowed.contains(matched.first);
     }).toList();
+  }
+
+  List<Map<String, dynamic>> _clinicalNcdHistoryForMember(
+    Map<String, String> member,
+  ) {
+    final raw = (member['clinicalHistoryNcdEntries'] ?? '').trim();
+    if (raw.isEmpty) return const [];
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is List) {
+        return decoded
+            .whereType<Map>()
+            .map((e) => e.map((k, v) => MapEntry(k.toString(), v)))
+            .toList();
+      }
+    } catch (_) {}
+    return const [];
+  }
+
+  List<Map<String, dynamic>> _submissionLogForMember(
+    Map<String, String> member,
+  ) {
+    final raw = (member['formSubmissionLog'] ?? '').trim();
+    if (raw.isEmpty) return const [];
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is List) {
+        return decoded
+            .whereType<Map>()
+            .map((e) => e.map((k, v) => MapEntry(k.toString(), v)))
+            .toList();
+      }
+    } catch (_) {}
+    return const [];
+  }
+
+  List<Map<String, dynamic>> _sameDaySubmissionForMember(
+    Map<String, String> member,
+  ) {
+    final today = DateTime.now().toIso8601String().split('T').first;
+    return _submissionLogForMember(member).where((entry) {
+      final submitted = (entry['submittedAt'] ?? '').toString();
+      return submitted.split('T').first == today;
+    }).toList();
+  }
+
+  List<String> _followUpAssetsFor(Map<String, String> member) {
+    final allowed = _allowedMemberFormIds(member).toSet();
+    final placeAllowed = _allowedFormIdsByEntryPlace();
+    final followIds = _followUpFormIds
+        .where((id) => allowed.contains(id) && placeAllowed.contains(id))
+        .toList();
+    return followIds
+        .map((id) => _formIdToAsset[id])
+        .whereType<String>()
+        .toList();
+  }
+
+  Future<void> _openQuickFollowUpForMember({
+    required Map<String, dynamic> family,
+    required Map<String, String> member,
+  }) async {
+    final assets = _followUpAssetsFor(member);
+    if (assets.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No follow-up forms available for this member.')),
+      );
+      return;
+    }
+    final followIds = _followUpFormIds
+        .where((id) => _allowedMemberFormIds(member).contains(id))
+        .toList();
+    await _openFormList(
+      title: 'Follow-up Forms',
+      assets: assets,
+      entityLabel: '${member['fullName'] ?? ''} (${family['familyId'] ?? ''})',
+      contextData: {
+        'ancHistory': member['ancHistory'],
+        'ancBaseline': member['ancBaseline'],
+        'previousEntries': _clinicalNcdHistoryForMember(member),
+        'sameDayForms': _sameDaySubmissionForMember(member),
+      },
+      suggestedFormIds: followIds,
+      onSelect: (form, result) {
+        _handleMemberFormResult(
+          family: family,
+          member: member,
+          form: form,
+          result: result,
+        );
+        setState(() {});
+        _persistLocalState();
+      },
+    );
+  }
+
+  Set<String> _allowedFormIdsByEntryPlace() {
+    if (!_isIndividualFlow) {
+      return {
+        'clinical_history',
+        'ncd',
+        'anc',
+        'pnc',
+        'new_born',
+        'under_5',
+      };
+    }
+    if (_entryPlace == 'School' || _entryPlace == 'Anganwadi') {
+      return {'clinical_history', 'under_5'};
+    }
+    if (_entryPlace == 'Workplace') {
+      return {'clinical_history', 'ncd'};
+    }
+    return {'clinical_history', 'ncd', 'anc', 'pnc', 'new_born', 'under_5'};
   }
 
   void _disposeControllersAfterTransition(
@@ -540,6 +864,10 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
     final dob = TextEditingController(text: initial?['dob'] ?? '');
     final monthlyIncome =
         TextEditingController(text: initial?['monthlyIncome'] ?? '');
+    final contactPhone =
+        TextEditingController(text: initial?['contactPhone'] ?? '');
+    final aadhaar = TextEditingController(text: initial?['aadhaar'] ?? '');
+    final abha = TextEditingController(text: initial?['abha'] ?? '');
     String? relationship = _nullIfEmpty(initial?['relationship']);
     String? sex = _nullIfEmpty(initial?['sex']);
     String? maritalStatus = _nullIfEmpty(initial?['maritalStatus']);
@@ -632,6 +960,26 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                             labelText: 'Monthly Income',
                           ),
                         ),
+                        TextFormField(
+                          controller: contactPhone,
+                          keyboardType: TextInputType.phone,
+                          decoration: const InputDecoration(
+                            labelText: 'Phone Number (for linking)',
+                          ),
+                        ),
+                        TextFormField(
+                          controller: aadhaar,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Aadhaar (optional)',
+                          ),
+                        ),
+                        TextFormField(
+                          controller: abha,
+                          decoration: const InputDecoration(
+                            labelText: 'ABHA ID (optional)',
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -655,6 +1003,9 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                       'maritalStatus': maritalStatus ?? '',
                       'workStatus': workStatus ?? '',
                       'monthlyIncome': monthlyIncome.text.trim(),
+                      'contactPhone': contactPhone.text.trim(),
+                      'aadhaar': aadhaar.text.trim(),
+                      'abha': abha.text.trim(),
                       'status': initial?['status'] ?? 'Alive',
                       'clinicalHistory': initial?['clinicalHistory'] ?? '',
                     };
@@ -669,15 +1020,35 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
       },
     );
 
-    _disposeControllersAfterTransition([fullName, dob, monthlyIncome]);
+    _disposeControllersAfterTransition([
+      fullName,
+      dob,
+      monthlyIncome,
+      contactPhone,
+      aadhaar,
+      abha,
+    ]);
     return result;
   }
 
   Future<void> _openAddFamilySheet() async {
+    if (_isCommunityFlow) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Community data collection is under development.'),
+        ),
+      );
+      return;
+    }
+    final isIndividualEntry = _isIndividualFlow;
     final familyIdController = TextEditingController(text: _generateFamilyId());
     final familyLocationController = TextEditingController();
     final gpsController = TextEditingController();
     final linkedFamilyIdController = TextEditingController();
+    final contactPhoneController = TextEditingController();
+    final aadhaarController = TextEditingController();
+    final abhaController = TextEditingController();
     final memberCountController = TextEditingController();
     final members = <Map<String, String>?>[];
     String familyEntryType = 'New';
@@ -753,34 +1124,71 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Add Family Entry',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      Text(
+                        isIndividualEntry
+                            ? 'Add Individual Entry'
+                            : 'Add Family Entry',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       TextField(
                         controller: familyIdController,
                         readOnly: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Family Unique ID (Auto)',
+                        decoration: InputDecoration(
+                          labelText: isIndividualEntry
+                              ? 'Individual Unique ID (Auto)'
+                              : 'Family Unique ID (Auto)',
                           border: OutlineInputBorder(),
                         ),
                       ),
                       const SizedBox(height: 12),
-                      TextField(
-                        controller: memberCountController,
-                        keyboardType: TextInputType.number,
-                        onChanged: (_) => setLocalState(updateMemberList),
-                        decoration: const InputDecoration(
-                          labelText: 'Number of Family Members',
-                          border: OutlineInputBorder(),
+                      if (!isIndividualEntry) ...[
+                        TextField(
+                          controller: memberCountController,
+                          keyboardType: TextInputType.number,
+                          onChanged: (_) => setLocalState(updateMemberList),
+                          decoration: const InputDecoration(
+                            labelText: 'Number of Family Members',
+                            border: OutlineInputBorder(),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
+                        const SizedBox(height: 12),
+                      ],
                       TextField(
                         controller: familyLocationController,
+                        decoration: InputDecoration(
+                          labelText: isIndividualEntry
+                              ? 'Location (OPD/School/Camp/Workplace)'
+                              : 'Family Location (House/Street/Landmark)',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: contactPhoneController,
+                        keyboardType: TextInputType.phone,
                         decoration: const InputDecoration(
-                          labelText: 'Family Location (House/Street/Landmark)',
+                          labelText: 'Phone Number (for linking)',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: aadhaarController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Aadhaar (optional)',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: abhaController,
+                        decoration: const InputDecoration(
+                          labelText: 'ABHA ID (optional)',
                           border: OutlineInputBorder(),
                         ),
                       ),
@@ -806,23 +1214,26 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        initialValue: familyEntryType,
-                        items: _familyEntryTypes
-                            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                            .toList(),
-                        onChanged: (v) {
-                          if (v == null) return;
-                          setLocalState(() => familyEntryType = v);
-                        },
-                        decoration: const InputDecoration(
-                          labelText: 'Family Type',
-                          border: OutlineInputBorder(),
+                      if (!isIndividualEntry)
+                        DropdownButtonFormField<String>(
+                          initialValue: familyEntryType,
+                          items: _familyEntryTypes
+                              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                              .toList(),
+                          onChanged: (v) {
+                            if (v == null) return;
+                            setLocalState(() => familyEntryType = v);
+                          },
+                          decoration: const InputDecoration(
+                            labelText: 'Family Type',
+                            border: OutlineInputBorder(),
+                          ),
                         ),
-                      ),
-                      if (familyEntryType == 'Migrant' || familyEntryType == 'Split')
+                      if (!isIndividualEntry &&
+                          (familyEntryType == 'Migrant' || familyEntryType == 'Split'))
                         const SizedBox(height: 12),
-                      if (familyEntryType == 'Migrant' || familyEntryType == 'Split')
+                      if (!isIndividualEntry &&
+                          (familyEntryType == 'Migrant' || familyEntryType == 'Split'))
                         Row(
                           children: [
                             Expanded(
@@ -852,28 +1263,31 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                             ),
                           ],
                         ),
-                      const SizedBox(height: 12),
-                      if (count > 0)
+                      if (isIndividualEntry)
+                        const SizedBox(height: 12),
+                      if (count > 0 && !isIndividualEntry)
                         const Text(
                           'Add demographic details for each member:',
                           style: TextStyle(fontWeight: FontWeight.w600),
                         ),
                       const SizedBox(height: 8),
                       Expanded(
-                        child: count <= 0
-                            ? const Center(
-                                child: Text(
-                                  'Enter number of family members to generate add buttons.',
-                                ),
-                              )
-                            : ListView.builder(
-                                itemCount: members.length,
+                        child: (isIndividualEntry || count > 0)
+                            ? ListView.builder(
+                                itemCount: isIndividualEntry ? 1 : members.length,
                                 itemBuilder: (context, index) {
+                                  if (isIndividualEntry && members.isEmpty) {
+                                    members.add(null);
+                                  }
                                   final member = members[index];
                                   final isAdded = member != null;
                                   return Card(
                                     child: ListTile(
-                                      title: Text('Member ${index + 1}'),
+                                      title: Text(
+                                        isIndividualEntry
+                                            ? 'Individual Demography'
+                                            : 'Member ${index + 1}',
+                                      ),
                                       subtitle: Text(
                                         isAdded
                                             ? '${member['fullName']} | ${member['sex']} | Age ${member['age']}'
@@ -881,9 +1295,20 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                                       ),
                                       trailing: ElevatedButton(
                                         onPressed: () async {
+                                          final initial = members[index] == null
+                                              ? {
+                                                  'contactPhone':
+                                                      contactPhoneController.text.trim(),
+                                                  'aadhaar':
+                                                      aadhaarController.text.trim(),
+                                                  'abha': abhaController.text.trim(),
+                                                  'relationship':
+                                                      isIndividualEntry ? 'Self' : '',
+                                                }
+                                              : members[index];
                                           final result = await _openMemberDialog(
                                             memberIndex: index,
-                                            initial: members[index],
+                                            initial: initial,
                                           );
                                           if (result == null ||
                                               !mounted ||
@@ -899,6 +1324,11 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                                     ),
                                   );
                                 },
+                              )
+                            : const Center(
+                                child: Text(
+                                  'Enter number of family members to generate add buttons.',
+                                ),
                               ),
                       ),
                       const SizedBox(height: 8),
@@ -906,7 +1336,7 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
-                            if (count <= 0) {
+                            if (!isIndividualEntry && count <= 0) {
                               ScaffoldMessenger.of(dialogContext).showSnackBar(
                                 const SnackBar(
                                   content: Text('Enter valid number of family members.'),
@@ -914,7 +1344,8 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                               );
                               return;
                             }
-                            if (familyEntryType == 'Split' &&
+                            if (!isIndividualEntry &&
+                                familyEntryType == 'Split' &&
                                 linkedFamilyIdController.text.trim().isEmpty) {
                               ScaffoldMessenger.of(dialogContext).showSnackBar(
                                 const SnackBar(
@@ -925,12 +1356,13 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                               );
                               return;
                             }
+                            final requiredCount = isIndividualEntry ? 1 : count;
                             final filledMembers = members.where((m) => m != null).length;
-                            if (filledMembers != count) {
+                            if (filledMembers != requiredCount) {
                               ScaffoldMessenger.of(dialogContext).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    'Please add all $count members before saving.',
+                                    'Please add all $requiredCount members before saving.',
                                   ),
                                 ),
                               );
@@ -938,14 +1370,28 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                             }
                             setState(() {
                               final familyId = familyIdController.text.trim();
+                              final phone = contactPhoneController.text.trim();
+                              final aadhaar = aadhaarController.text.trim();
+                              final abha = abhaController.text.trim();
                               final linkedFamilyId = linkedFamilyIdController.text.trim();
+                              final autoLinked =
+                                  _findLinkedEntity(phone: phone, aadhaar: aadhaar, abha: abha);
                               final normalizedType = familyEntryType == 'Migrant' &&
                                       linkedFamilyId.isEmpty
                                   ? 'New'
-                                  : familyEntryType;
+                                  : (isIndividualEntry ? 'Individual' : familyEntryType);
                               final familyUuid = _generateUuid();
                               final qrValue =
                                   'https://caregrid.app/family/$familyUuid';
+                              final castMembers = members.cast<Map<String, String>>();
+                              if (castMembers.isNotEmpty) {
+                                castMembers[0]['contactPhone'] =
+                                    castMembers[0]['contactPhone'] ?? phone;
+                                castMembers[0]['aadhaar'] =
+                                    castMembers[0]['aadhaar'] ?? aadhaar;
+                                castMembers[0]['abha'] =
+                                    castMembers[0]['abha'] ?? abha;
+                              }
                               _familyEntries.add({
                                 'familyUuid': familyUuid,
                                 'familyId': familyId,
@@ -953,19 +1399,29 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                                 'gps': gpsController.text.trim(),
                                 'qrValue': qrValue,
                                 'familyType': normalizedType,
-                                'linkedFamilyId': linkedFamilyId,
+                                'linkedFamilyId': linkedFamilyId.isNotEmpty
+                                    ? linkedFamilyId
+                                    : (autoLinked?['familyId'] ?? ''),
+                                'linkedPersonUuid': autoLinked?['personUuid'] ?? '',
+                                'contactPhone': phone,
+                                'aadhaar': aadhaar,
+                                'abha': abha,
                                 'gpsCaptured': gpsController.text.trim().isNotEmpty,
                                 'allowGpsUpdate': false,
                                 'familyStatus':
                                     normalizedType == 'Migrant' ? 'Migrated' : 'Active',
-                                'memberCount': count.toString(),
-                                'members': members.cast<Map<String, String>>(),
+                                'memberCount': requiredCount.toString(),
+                                'members': castMembers,
                               });
                             });
                             _persistLocalState();
                             Navigator.pop(dialogContext);
                           },
-                          child: const Text('Save Family Entry'),
+                          child: Text(
+                            isIndividualEntry
+                                ? 'Save Individual Entry'
+                                : 'Save Family Entry',
+                          ),
                         ),
                       ),
                     ],
@@ -983,6 +1439,9 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
       familyLocationController,
       gpsController,
       linkedFamilyIdController,
+      contactPhoneController,
+      aadhaarController,
+      abhaController,
       memberCountController,
     ]);
   }
@@ -1273,6 +1732,13 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
     required Map<String, dynamic>? result,
   }) {
     final formId = (result?['formId'] ?? form['id'] ?? '').toString();
+    if (result != null) {
+      final log = _submissionLogForMember(member);
+      final entry = Map<String, dynamic>.from(result);
+      entry['submittedAt'] ??= DateTime.now().toIso8601String();
+      log.add(entry);
+      member['formSubmissionLog'] = jsonEncode(log);
+    }
     if (formId == 'ncd') {
       member['ncdActive'] = 'true';
     }
@@ -1293,6 +1759,101 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
               const <String, dynamic>{})
           .map((k, v) => MapEntry(k, (v ?? '').toString()));
       member['ancBaseline'] = jsonEncode(baseline);
+    }
+    if (formId == 'clinical_history_ncd' && result != null) {
+      final history = _clinicalNcdHistoryForMember(member);
+      history.add(Map<String, dynamic>.from(result));
+      member['clinicalHistoryNcdEntries'] = jsonEncode(history);
+      final values = result['values'] as Map<String, dynamic>? ?? const {};
+      List<String> decodeTextList(dynamic raw) {
+        if (raw is List) {
+          return raw.map((e) => e.toString().trim()).where((e) => e.isNotEmpty).toList();
+        }
+        final text = (raw ?? '').toString().trim();
+        if (text.isEmpty) return const [];
+        try {
+          final parsed = jsonDecode(text);
+          if (parsed is List) {
+            return parsed
+                .map((e) => e.toString().trim())
+                .where((e) => e.isNotEmpty)
+                .toList();
+          }
+        } catch (_) {}
+        return [text];
+      }
+
+      List<String> decodeGroupRows(
+        dynamic raw,
+        List<String> keys,
+      ) {
+        final text = (raw ?? '').toString().trim();
+        if (text.isEmpty) return const [];
+        try {
+          final parsed = jsonDecode(text);
+          if (parsed is! List) return const [];
+          final rows = <String>[];
+          for (final item in parsed) {
+            if (item is! Map) continue;
+            final map = item.map((k, v) => MapEntry(k.toString(), (v ?? '').toString()));
+            final chunks = <String>[];
+            for (final k in keys) {
+              final t = (map[k] ?? '').trim();
+              if (t.isNotEmpty) chunks.add(t);
+            }
+            if (chunks.isNotEmpty) rows.add(chunks.join(' | '));
+          }
+          return rows;
+        } catch (_) {
+          return const [];
+        }
+      }
+      final complaintsRaw = (values['chief_complaints'] ?? '').toString();
+      if (complaintsRaw.trim().isNotEmpty) {
+        try {
+          final parsed = jsonDecode(complaintsRaw);
+          if (parsed is List) {
+            final labels = parsed
+                .whereType<Map>()
+                .map((e) => (e['complaint'] ?? '').toString().trim())
+                .where((e) => e.isNotEmpty)
+                .toList();
+            if (labels.isNotEmpty) {
+              member['presentingComplaints'] = jsonEncode(labels);
+              member['chiefComplaints'] = labels.join(' | ');
+            }
+          }
+        } catch (_) {}
+      }
+      final includeSameDay =
+          (values['include_same_day_in_final_treatment'] ?? 'Yes').toString() == 'Yes';
+      final sameDayTreat = decodeTextList(values['same_day_treatments_readonly']);
+      final sameDayInv = decodeTextList(values['same_day_investigations_readonly']);
+      final addonTreat = decodeGroupRows(
+        values['additional_treatments'],
+        const ['medication', 'dose', 'frequency', 'period'],
+      );
+      final addonInv = decodeGroupRows(
+        values['additional_investigations'],
+        const ['investigation', 'frequency', 'period'],
+      );
+      final treatmentBlock = <String>[
+        if (includeSameDay) ...sameDayTreat,
+        ...addonTreat,
+        ...decodeTextList(values['overall_treatment_plan']),
+        ...decodeTextList(values['treatment_plan']),
+        ...decodeTextList(values['prescription_details']),
+      ];
+      final investigationBlock = <String>[
+        if (includeSameDay) ...sameDayInv,
+        ...addonInv,
+        ...decodeTextList(values['overall_investigation_plan']),
+        ...decodeTextList(values['investigations_to_do']),
+      ];
+      member['finalTreatmentReadonly'] = treatmentBlock.join('\n');
+      member['finalInvestigationReadonly'] = investigationBlock.join('\n');
+      member['finalAdviceReadonly'] = (values['final_notes_advice'] ?? '').toString();
+      member['finalDiagnosisReadonly'] = (values['working_diagnosis'] ?? '').toString();
     }
     final followForNcd = _resolveFollowUpDate(form, result);
     _addRevisitEntry(
@@ -1379,6 +1940,8 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
               contextData: {
                 'ancHistory': member['ancHistory'],
                 'ancBaseline': member['ancBaseline'],
+                'previousEntries': _clinicalNcdHistoryForMember(member),
+                'sameDayForms': _sameDaySubmissionForMember(member),
               },
             ),
           ),
@@ -1420,6 +1983,8 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
       contextData: {
         'ancHistory': member['ancHistory'],
         'ancBaseline': member['ancBaseline'],
+        'previousEntries': _clinicalNcdHistoryForMember(member),
+        'sameDayForms': _sameDaySubmissionForMember(member),
       },
       suggestedFormIds: suggested,
       onSelect: (form, result) {
@@ -1466,14 +2031,19 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
           const SizedBox(height: 12),
           FamilyListHeader(
             familyCount: _familyEntries.length,
+            entryLabel: _isIndividualFlow ? 'Individual' : 'Family',
             onAddEntry: _openAddFamilySheet,
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: _familyEntries.isEmpty
-                ? const Center(
-                    child: Text('No family entries yet. Click Add Entry to start.'),
-                  )
+                child: _familyEntries.isEmpty
+                    ? Center(
+                        child: Text(
+                          _isIndividualFlow
+                              ? 'No individual entries yet. Click Add Entry to start.'
+                              : 'No family entries yet. Click Add Entry to start.',
+                        ),
+                      )
                 : ListView.builder(
                     itemCount: _familyEntries.length,
                     itemBuilder: (context, index) {
@@ -1506,29 +2076,34 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                                 onPressed: () => _openLocationApp(family),
                                 icon: const Icon(Icons.map_outlined),
                               ),
-                              IconButton(
-                                tooltip: 'Family Forms',
-                                onPressed: () => _openFormList(
-                                  title: 'Family Forms',
-                                  assets: _familyFormAssets,
-                                  entityLabel: family['familyId']?.toString(),
-                                  onSelect: (form, result) {
-                                    final follow = _resolveFollowUpDate(form, result);
-                                    if (follow.isEmpty) return;
-                                    _addRevisitEntry(
-                                      familyId: (family['familyId'] ?? '').toString(),
-                                      memberName: 'Family',
-                                      formId: (result?['formId'] ?? form['id'] ?? '').toString(),
-                                      formTitle: (result?['formTitle'] ?? form['title'] ?? '').toString(),
-                                      followUpDate: follow,
-                                      scope: 'Family',
-                                    );
-                                    setState(() {});
-                                    _persistLocalState();
-                                  },
+                              if (!_isIndividualFlow)
+                                IconButton(
+                                  tooltip: 'Family Forms',
+                                  onPressed: () => _openFormList(
+                                    title: 'Family Forms',
+                                    assets: _familyFormAssets,
+                                    entityLabel: family['familyId']?.toString(),
+                                    onSelect: (form, result) {
+                                      final follow = _resolveFollowUpDate(form, result);
+                                      if (follow.isEmpty) return;
+                                      _addRevisitEntry(
+                                        familyId: (family['familyId'] ?? '').toString(),
+                                        memberName: 'Family',
+                                        formId:
+                                            (result?['formId'] ?? form['id'] ?? '').toString(),
+                                        formTitle: (result?['formTitle'] ??
+                                                form['title'] ??
+                                                '')
+                                            .toString(),
+                                        followUpDate: follow,
+                                        scope: 'Family',
+                                      );
+                                      setState(() {});
+                                      _persistLocalState();
+                                    },
+                                  ),
+                                  icon: const Icon(Icons.article_outlined),
                                 ),
-                                icon: const Icon(Icons.article_outlined),
-                              ),
                               PopupMenuButton<String>(
                                 onSelected: (value) {
                                   switch (value) {
@@ -1620,7 +2195,11 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                           ),
                           children: [
                             ListTile(
-                              title: const Text('Family Location'),
+                              title: Text(
+                                _isIndividualFlow
+                                    ? 'Entry Location'
+                                    : 'Family Location',
+                              ),
                               subtitle: Text(
                                 (family['familyLocation'] ?? '').toString().isEmpty
                                     ? '-'
@@ -1640,7 +2219,9 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                                   '${m['sex'] ?? '-'} | '
                                   'Age ${m['age'] ?? '-'} | '
                                   'Income ${m['monthlyIncome']?.isEmpty == true ? '-' : m['monthlyIncome']} | '
-                                  'Status ${m['status'] ?? 'Alive'}',
+                                  'Status ${m['status'] ?? 'Alive'}'
+                                  '${(m['contactPhone'] ?? '').trim().isNotEmpty ? ' | Phone ${m['contactPhone']}' : ''}'
+                                  '${(m['abha'] ?? '').trim().isNotEmpty ? ' | ABHA ${m['abha']}' : ''}',
                                 ),
                                 onTap: () => _openIndividualProfile(
                                   family: family,
@@ -1656,7 +2237,15 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                                         member: m,
                                       ),
                                       icon: const Icon(Icons.person_outline),
-                                    ),
+                                      ),
+                                      IconButton(
+                                        tooltip: 'Add Follow-up',
+                                        onPressed: () => _openQuickFollowUpForMember(
+                                          family: family,
+                                          member: m,
+                                        ),
+                                        icon: const Icon(Icons.event_available_outlined),
+                                      ),
                                       IconButton(
                                         tooltip: 'Forms',
                                         onPressed: () => _openFormList(
@@ -1667,13 +2256,12 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                                           contextData: {
                                             'ancHistory': m['ancHistory'],
                                             'ancBaseline': m['ancBaseline'],
+                                            'previousEntries':
+                                                _clinicalNcdHistoryForMember(m),
+                                            'sameDayForms':
+                                                _sameDaySubmissionForMember(m),
                                           },
-                                          suggestedFormIds:
-                                              (m['ncdActive'] == 'true' &&
-                                                      _allowedMemberFormIds(m)
-                                                          .contains('diet_recall_24h'))
-                                                  ? ['diet_recall_24h']
-                                                  : const [],
+                                          suggestedFormIds: const [],
                                           onSelect: (form, result) {
                                             _handleMemberFormResult(
                                               family: family,
@@ -1708,19 +2296,41 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                                 ),
                               ),
                             ),
-                          ]
-                            ..add(
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: ElevatedButton.icon(
-                                    onPressed: () => _addMemberToFamily(family),
-                                    icon: const Icon(Icons.person_add),
-                                    label: const Text('Add Member'),
-                                  ),
+                            if ((family['contactPhone'] ?? '').toString().trim().isNotEmpty ||
+                                (family['aadhaar'] ?? '').toString().trim().isNotEmpty ||
+                                (family['abha'] ?? '').toString().trim().isNotEmpty ||
+                                (family['linkedFamilyId'] ?? '').toString().trim().isNotEmpty)
+                              ListTile(
+                                title: const Text('Linking Identifiers'),
+                                subtitle: Text(
+                                  'Phone: ${(family['contactPhone'] ?? '-').toString()} | '
+                                  'Aadhaar: ${(family['aadhaar'] ?? '-').toString()} | '
+                                  'ABHA: ${(family['abha'] ?? '-').toString()} | '
+                                  'Linked Family: ${(family['linkedFamilyId'] ?? '-').toString()}',
                                 ),
                               ),
+                          ]
+                            ..addAll(
+                              _isIndividualFlow
+                                  ? const <Widget>[]
+                                  : [
+                                      Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                          16,
+                                          8,
+                                          16,
+                                          8,
+                                        ),
+                                        child: Align(
+                                          alignment: Alignment.centerLeft,
+                                          child: ElevatedButton.icon(
+                                            onPressed: () => _addMemberToFamily(family),
+                                            icon: const Icon(Icons.person_add),
+                                            label: const Text('Add Member'),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                             )
                             ..addAll(
                               (family['linkedFamilyId'] ?? '')

@@ -1,0 +1,261 @@
+{
+  "id": "clinical_history_ncd",
+  "title": "NCD Clinical Follow-up Master",
+  "version": 7,
+  "followup": {
+    "enabled": true,
+    "defaultCycleDays": 30,
+    "cycleOptionsDays": [7, 14, 30, 60, 90]
+  },
+  "sections": [
+    {
+      "id": "presenting_and_followup_setup",
+      "title": "1. Presenting Complaints and Follow-up Setup",
+      "fields": [
+        { "id": "entry_date", "label": "Date of Entry", "type": "date" },
+        {
+          "id": "chief_complaints",
+          "label": "Presenting Complaints (add one by one)",
+          "type": "repeatable_group",
+          "itemFields": [
+            { "id": "complaint", "label": "Complaint", "type": "text" },
+            { "id": "duration", "label": "Duration", "type": "text" },
+            { "id": "frequency", "label": "Frequency", "type": "text" },
+            { "id": "character", "label": "Character", "type": "text" },
+            { "id": "associated_symptoms", "label": "Associated Symptoms", "type": "text" },
+            { "id": "severity", "label": "Severity", "type": "select", "options": ["Mild", "Moderate", "Severe"] }
+          ]
+        },
+        {
+          "id": "next_followup_form",
+          "label": "Next Follow-up Form to Raise",
+          "type": "select",
+          "options": ["NCD Follow-up", "Clinical Follow-up", "Combined Review"]
+        },
+        { "id": "next_followup_date", "label": "Next Follow-up Date", "type": "date" },
+        {
+          "id": "include_same_day_in_final_treatment",
+          "label": "Include Same-day Filled Treatments in Final Prescription?",
+          "type": "select",
+          "options": ["Yes", "No"]
+        }
+      ]
+    },
+    {
+      "id": "comorb_core",
+      "title": "2. Comorbidity and NCD Details (one disease at a time)",
+      "fields": [
+        {
+          "id": "comorbid_ncd_list",
+          "label": "NCD Entries (add one by one)",
+          "type": "repeatable_group",
+          "itemFields": [
+            {
+              "id": "disease",
+              "label": "Disease",
+              "type": "select",
+              "options": [
+                "Diabetes",
+                "Hypertension",
+                "Oral Cancer",
+                "Breast Cancer",
+                "Cervical Cancer",
+                "COPD",
+                "Asthma",
+                "CKD",
+                "IHD",
+                "Stroke",
+                "Other"
+              ]
+            },
+            { "id": "other_name", "label": "If Other, enter disease", "type": "text" },
+            { "id": "baseline_duration", "label": "Disease Duration", "type": "text" },
+            { "id": "treatment_status", "label": "On Treatment?", "type": "select", "options": ["No", "Yes"] },
+            {
+              "id": "current_treatments",
+              "label": "Current/Past Treatment (one by one)",
+              "type": "repeatable_group",
+              "itemFields": [
+                { "id": "medication", "label": "Medication", "type": "text" },
+                { "id": "dose", "label": "Dose", "type": "text" },
+                { "id": "frequency", "label": "Frequency", "type": "select", "options": ["OD", "BD", "TDS", "QID", "HS", "SOS", "Other"] },
+                { "id": "period", "label": "Duration/Period", "type": "text" },
+                { "id": "instruction", "label": "Instruction", "type": "text" }
+              ]
+            },
+            { "id": "disease_complaints", "label": "Disease-specific Complaints (one by one)", "type": "repeatable_text" },
+            {
+              "id": "previous_investigations",
+              "label": "Previous Investigations with Values",
+              "type": "repeatable_group",
+              "itemFields": [
+                { "id": "investigation", "label": "Investigation", "type": "text" },
+                { "id": "value", "label": "Value", "type": "text" },
+                { "id": "date", "label": "Date", "type": "date" }
+              ]
+            },
+            {
+              "id": "new_investigations",
+              "label": "New Investigation Prescription",
+              "type": "repeatable_group",
+              "itemFields": [
+                { "id": "investigation", "label": "Investigation", "type": "text" },
+                { "id": "reason", "label": "Reason", "type": "text" }
+              ]
+            },
+            {
+              "id": "new_treatments",
+              "label": "New Treatment Prescription",
+              "type": "repeatable_group",
+              "itemFields": [
+                { "id": "medication", "label": "Medication", "type": "text" },
+                { "id": "dose", "label": "Dose", "type": "text" },
+                { "id": "frequency", "label": "Frequency", "type": "select", "options": ["OD", "BD", "TDS", "QID", "HS", "SOS", "Other"] },
+                { "id": "period", "label": "Duration/Period", "type": "text" },
+                { "id": "instruction", "label": "Instruction", "type": "text" }
+              ]
+            },
+            { "id": "disease_advice", "label": "Advice", "type": "textarea" },
+            { "id": "disease_followup_date", "label": "Disease-specific Follow-up Date", "type": "date" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "complication_dm",
+      "title": "3. Diabetes Complication Minimal Questions",
+      "fields": [
+        { "id": "dm_polyuria", "label": "DM: Polyuria present?", "type": "select", "options": ["No", "Yes"] },
+        { "id": "dm_polydipsia", "label": "DM: Polydipsia present?", "type": "select", "options": ["No", "Yes"] },
+        { "id": "dm_hypoglycemia", "label": "DM: Hypoglycemia episodes?", "type": "select", "options": ["No", "Yes"] },
+        { "id": "dm_foot_symptoms", "label": "DM: Foot symptoms / ulcer?", "type": "select", "options": ["No", "Yes"] },
+        { "id": "dm_retinopathy_symptoms", "label": "DM: Visual symptoms?", "type": "select", "options": ["No", "Yes"] }
+      ]
+    },
+    {
+      "id": "complication_htn",
+      "title": "4. Hypertension Complication Minimal Questions",
+      "fields": [
+        { "id": "htn_headache", "label": "HTN: Headache/occipital pain?", "type": "select", "options": ["No", "Yes"] },
+        { "id": "htn_chest_pain", "label": "HTN: Chest pain?", "type": "select", "options": ["No", "Yes"] },
+        { "id": "htn_breathlessness", "label": "HTN: Breathlessness?", "type": "select", "options": ["No", "Yes"] },
+        { "id": "htn_neuro_deficit", "label": "HTN: Neuro deficit symptoms?", "type": "select", "options": ["No", "Yes"] }
+      ]
+    },
+    {
+      "id": "complication_oral_cancer",
+      "title": "5. Oral Cancer Minimal Questions",
+      "fields": [
+        { "id": "oral_non_healing_ulcer", "label": "Oral cancer: Non-healing ulcer?", "type": "select", "options": ["No", "Yes"] },
+        { "id": "oral_bleeding", "label": "Oral cancer: Bleeding lesion?", "type": "select", "options": ["No", "Yes"] },
+        { "id": "oral_pain_swallow", "label": "Oral cancer: Pain/swallow difficulty?", "type": "select", "options": ["No", "Yes"] }
+      ]
+    },
+    {
+      "id": "complication_breast_cancer",
+      "title": "6. Breast Cancer Minimal Questions",
+      "fields": [
+        { "id": "breast_lump", "label": "Breast cancer: New lump?", "type": "select", "options": ["No", "Yes"] },
+        { "id": "breast_discharge", "label": "Breast cancer: Nipple discharge/retraction?", "type": "select", "options": ["No", "Yes"] },
+        { "id": "breast_pain", "label": "Breast cancer: Persistent pain/skin change?", "type": "select", "options": ["No", "Yes"] }
+      ]
+    },
+    {
+      "id": "complication_cervical_cancer",
+      "title": "7. Cervical Cancer Minimal Questions",
+      "fields": [
+        { "id": "cervical_bleeding", "label": "Cervical cancer: Abnormal bleeding?", "type": "select", "options": ["No", "Yes"] },
+        { "id": "cervical_discharge", "label": "Cervical cancer: Foul vaginal discharge?", "type": "select", "options": ["No", "Yes"] },
+        { "id": "cervical_pain", "label": "Cervical cancer: Pelvic pain symptoms?", "type": "select", "options": ["No", "Yes"] }
+      ]
+    },
+    {
+      "id": "complication_respiratory",
+      "title": "8. COPD/Asthma Minimal Questions",
+      "fields": [
+        { "id": "resp_night_symptoms", "label": "Night symptoms/wheeze?", "type": "select", "options": ["No", "Yes"] },
+        { "id": "resp_exertional_dyspnea", "label": "Exertional dyspnea worsening?", "type": "select", "options": ["No", "Yes"] },
+        { "id": "resp_exacerbation", "label": "Recent exacerbation/admission?", "type": "select", "options": ["No", "Yes"] }
+      ]
+    },
+    {
+      "id": "complication_renal_cardiac_neuro",
+      "title": "9. CKD/IHD/Stroke Minimal Questions",
+      "fields": [
+        { "id": "ckd_edema", "label": "CKD: Edema / oliguria?", "type": "select", "options": ["No", "Yes"] },
+        { "id": "ihd_angina", "label": "IHD: Angina symptoms?", "type": "select", "options": ["No", "Yes"] },
+        { "id": "stroke_new_deficit", "label": "Stroke: New weakness/speech issue?", "type": "select", "options": ["No", "Yes"] }
+      ]
+    },
+    {
+      "id": "complication_other",
+      "title": "10. Other NCD Minimal Questions",
+      "fields": [
+        { "id": "other_red_flags", "label": "Other NCD: Red-flag progression?", "type": "select", "options": ["No", "Yes"] },
+        { "id": "other_ncd_notes", "label": "Other NCD generic notes", "type": "textarea" }
+      ]
+    },
+    {
+      "id": "followup_clinical_block",
+      "title": "11. Follow-up Clinical Block",
+      "fields": [
+        { "id": "followup_presenting_complaints", "label": "Follow-up Presenting Complaints", "type": "repeatable_text" },
+        { "id": "followup_clinico_social_history", "label": "Follow-up Clinico-social History", "type": "textarea" },
+        { "id": "followup_nutrition", "label": "Follow-up Nutrition History", "type": "textarea" },
+        { "id": "followup_general_exam", "label": "Follow-up General Examination", "type": "repeatable_text" },
+        { "id": "overall_investigation_plan", "label": "Overall Investigation Plan", "type": "repeatable_text" },
+        { "id": "overall_treatment_plan", "label": "Overall Treatment Plan", "type": "textarea" },
+        { "id": "working_diagnosis", "label": "Diagnosis", "type": "textarea" },
+        { "id": "final_notes_advice", "label": "Final Notes and Advice", "type": "textarea" },
+        { "id": "calculated_duration_summary", "label": "Calculated Duration Summary", "type": "textarea" }
+      ]
+    },
+    {
+      "id": "final_prescription_builder",
+      "title": "12. Final Prescription Builder",
+      "fields": [
+        {
+          "id": "additional_treatments",
+          "label": "Add Other Treatment (one by one)",
+          "type": "repeatable_group",
+          "itemFields": [
+            { "id": "medication", "label": "Medication", "type": "text" },
+            { "id": "dose", "label": "Dose", "type": "text" },
+            { "id": "frequency", "label": "Frequency", "type": "select", "options": ["OD", "BD", "TDS", "QID", "HS", "SOS", "Other"] },
+            { "id": "period", "label": "Period", "type": "text" },
+            { "id": "instruction", "label": "Instruction", "type": "text" }
+          ]
+        },
+        {
+          "id": "additional_investigations",
+          "label": "Add Other Investigations (one by one)",
+          "type": "repeatable_group",
+          "itemFields": [
+            { "id": "investigation", "label": "Investigation", "type": "text" },
+            { "id": "frequency", "label": "Frequency", "type": "select", "options": ["One time", "Weekly", "Biweekly", "Monthly", "Other"] },
+            { "id": "period", "label": "Period", "type": "text" }
+          ]
+        },
+        { "id": "prescription_details", "label": "Final Prescription Details", "type": "textarea" }
+      ]
+    },
+    {
+      "id": "field_staff",
+      "title": "13. Field Staff Inputs",
+      "fields": [
+        { "id": "proposed_follow_up_date", "label": "Proposed Follow-up Date", "type": "date", "roles": ["Field"] },
+        { "id": "field_notes", "label": "Field Notes", "type": "textarea", "roles": ["Field"] }
+      ]
+    },
+    {
+      "id": "doctor_review",
+      "title": "14. Doctor Review and Prescription",
+      "fields": [
+        { "id": "investigations_to_do", "label": "Investigations to be Done (one by one)", "type": "repeatable_text", "roles": ["Doctor"] },
+        { "id": "treatment_plan", "label": "Treatment / Advice Plan", "type": "textarea", "roles": ["Doctor"] },
+        { "id": "follow_up_date", "label": "Confirmed Follow-up Date", "type": "date", "roles": ["Doctor"] },
+        { "id": "doctor_notes", "label": "Doctor Notes", "type": "textarea", "roles": ["Doctor"] }
+      ]
+    }
+  ]
+}

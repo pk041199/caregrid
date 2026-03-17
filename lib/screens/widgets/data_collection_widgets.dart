@@ -19,6 +19,8 @@ class GridContextCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Sampling Unit: $samplingUnit'),
+            if ((setupData['entryPlace'] ?? '').isNotEmpty)
+              Text('Entry Place: ${setupData['entryPlace']}'),
             Text('State: ${setupData['state'] ?? '-'}'),
             Text('District: ${setupData['district'] ?? '-'}'),
             Text('Taluk/Mandal: ${setupData['taluk'] ?? '-'}'),
@@ -35,17 +37,19 @@ class FamilyListHeader extends StatelessWidget {
     super.key,
     required this.familyCount,
     required this.onAddEntry,
+    this.entryLabel = 'Family',
   });
 
   final int familyCount;
   final VoidCallback onAddEntry;
+  final String entryLabel;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         Text(
-          'Saved Family Entries: $familyCount',
+          'Saved $entryLabel Entries: $familyCount',
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         const Spacer(),

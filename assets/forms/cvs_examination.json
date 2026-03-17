@@ -1,0 +1,25 @@
+{
+  "id": "cvs_examination",
+  "title": "CVS Examination",
+  "version": 1,
+  "followup": { "enabled": false },
+  "sections": [
+    {
+      "id": "inspection",
+      "title": "Inspection and Palpation",
+      "fields": [
+        { "id": "jvp", "label": "JVP", "type": "select", "required": false, "options": ["Normal", "Raised", "Not assessed"] },
+        { "id": "apex", "label": "Apex Beat", "type": "select", "required": false, "options": ["Normal", "Displaced", "Not assessed"] }
+      ]
+    },
+    {
+      "id": "auscultation",
+      "title": "Auscultation",
+      "fields": [
+        { "id": "s1s2", "label": "S1/S2", "type": "select", "required": false, "options": ["Normal", "Abnormal", "Not assessed"] },
+        { "id": "murmur", "label": "Murmur", "type": "select", "required": false, "options": ["Present", "Absent"] },
+        { "id": "cvs_notes", "label": "CVS Notes", "type": "text", "required": false }
+      ]
+    }
+  ]
+}

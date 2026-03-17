@@ -183,6 +183,16 @@ class FollowUpService {
             : (memberName.toLowerCase() == 'family' || memberName.isEmpty
                 ? 'Family'
                 : 'Individual'),
+        'reviewedBy': _firstNonEmptyString(row, const [
+          'reviewed_by_name',
+          'reviewed_by',
+          'doctor_name',
+        ]),
+        'reviewedAt': _firstNonEmptyString(row, const [
+          'reviewed_at',
+          'doctor_reviewed_at',
+          'updated_at',
+        ]),
       };
     }).where((row) => (row['followUpDate'] ?? '').trim().isNotEmpty).toList();
   }
@@ -198,5 +208,116 @@ class FollowUpService {
       if (text.isNotEmpty) return text;
     }
     return '';
+  }
+
+  Future<void> upsertDoctorReview({
+    required String familyId,
+    required String memberName,
+    required String formId,
+    required String followUpDate,
+    required String status,
+    required String doctorNotes,
+    required String treatmentPlan,
+    required List<String> investigations,
+    required String scope,
+  }) async {
+    final orgId = _authService.currentSession?.organizationId ?? '';
+    final reviewedBy = _authService.currentSession?.userId ?? '';
+    final reviewedByName = _authService.currentSession?.fullName ?? '';
+    final reviewedAt = DateTime.now().toIso8601String();
+
+    final payload = <String, dynamic>{
+      'organization_id': orgId,
+      'family_id': familyId,
+      'member_name': memberName,
+      'form_id': formId,
+      'follow_up_date': followUpDate,
+      'follow_up_status': status,
+      'status': status,
+      'scope': scope,
+      'doctor_notes': doctorNotes,
+      'treatment_plan': treatmentPlan,
+      'investigations': investigations,
+      'reviewed_by': reviewedBy,
+      'reviewed_by_name': reviewedByName,
+      'reviewed_at': reviewedAt,
+    };
+
+    final rpcAttempts = <({String fn, Map<String, dynamic> params})>[
+      (
+        fn: 'upsert_follow_up_doctor_review_v1',
+        params: {
+          'p_org_id': orgId,
+          'p_family_id': familyId,
+          'p_member_name': memberName,
+          'p_form_id': formId,
+          'p_follow_up_date': followUpDate,
+          'p_status': status,
+          'p_scope': scope,
+          'p_doctor_notes': doctorNotes,
+          'p_treatment_plan': treatmentPlan,
+          'p_investigations': investigations,
+          'p_reviewed_by': reviewedBy,
+          'p_reviewed_by_name': reviewedByName,
+        },
+      ),
+      (
+        fn: 'upsert_follow_up_doctor_review_v1',
+        params: {
+          'organization_id': orgId,
+          'family_id': familyId,
+          'member_name': memberName,
+          'form_id': formId,
+          'follow_up_date': followUpDate,
+          'status': status,
+          'scope': scope,
+          'doctor_notes': doctorNotes,
+          'treatment_plan': treatmentPlan,
+          'investigations': investigations,
+          'reviewed_by': reviewedBy,
+          'reviewed_by_name': reviewedByName,
+        },
+      ),
+    ];
+
+    for (final attempt in rpcAttempts) {
+      try {
+        await _client.rpc(attempt.fn, params: attempt.params);
+        return;
+      } on PostgrestException {
+        // Try fallback.
+      } catch (_) {
+        // Try fallback.
+      }
+    }
+
+    const candidateTables = <String>[
+      'follow_up_plans',
+      'revisit_plans',
+      'follow_ups',
+    ];
+    for (final table in candidateTables) {
+      try {
+        final updated = await _client
+            .from(table)
+            .update(payload)
+            .eq('organization_id', orgId)
+            .eq('family_id', familyId)
+            .eq('member_name', memberName)
+            .eq('form_id', formId)
+            .eq('scope', scope)
+            .select('family_id')
+            .limit(1);
+        if (updated.isNotEmpty) {
+          return;
+        }
+        await _client.from(table).insert(payload);
+        return;
+      } on PostgrestException {
+        // Try next table.
+      } catch (_) {
+        // Try next table.
+      }
+    }
   }
 }

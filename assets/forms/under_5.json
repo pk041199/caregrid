@@ -1,35 +1,51 @@
 {
   "id": "under_5",
-  "title": "Under‑5 Assessment",
-  "version": 1,
+  "title": "Under-5 Assessment (Agenda-Based)",
+  "version": 2,
   "followup": {
     "enabled": true,
     "defaultCycleDays": 90,
-    "cycleOptionsDays": [30, 60, 90, 180]
+    "cycleOptionsDays": [14, 30, 60, 90, 180]
   },
   "sections": [
     {
-      "id": "growth",
-      "title": "Growth",
+      "id": "visit_agenda",
+      "title": "1. Child Visit Agenda",
+      "fields": [
+        { "id": "caregiver_concern", "label": "Caregiver Main Concern", "type": "textarea", "required": false },
+        { "id": "danger_signs", "label": "Any Danger Signs", "type": "select", "required": false, "options": ["No", "Yes"] },
+        { "id": "danger_sign_notes", "label": "Danger Sign Details", "type": "textarea", "required": false }
+      ]
+    },
+    {
+      "id": "growth_nutrition",
+      "title": "2. Growth and Nutrition",
       "fields": [
         { "id": "weight_kg", "label": "Weight (kg)", "type": "number", "required": false, "validation": { "min": 2, "max": 30 } },
-        { "id": "height_cm", "label": "Height/Length (cm)", "type": "number", "required": false, "validation": { "min": 40, "max": 120 } },
-        { "id": "muac_cm", "label": "MUAC (cm)", "type": "number", "required": false, "validation": { "min": 8, "max": 20 } }
+        { "id": "height_cm", "label": "Height/Length (cm)", "type": "number", "required": false, "validation": { "min": 40, "max": 130 } },
+        { "id": "muac_cm", "label": "MUAC (cm)", "type": "number", "required": false, "validation": { "min": 8, "max": 20 } },
+        { "id": "feeding_pattern", "label": "Current Feeding Pattern", "type": "textarea", "required": false },
+        { "id": "nutrition_risk", "label": "Nutrition Risk", "type": "select", "required": false, "options": ["Low", "Moderate", "High"] }
       ]
     },
     {
-      "id": "immunization",
-      "title": "Immunization",
+      "id": "illness_immunization",
+      "title": "3. Illness and Immunization",
       "fields": [
-        { "id": "immunization_status", "label": "Immunization Status", "type": "select", "required": false, "options": ["Complete", "Partial", "Not done", "Unknown"] }
+        { "id": "fever_recent", "label": "Fever in Last 2 Weeks", "type": "select", "required": false, "options": ["Yes", "No", "Unknown"] },
+        { "id": "diarrhea_last2w", "label": "Diarrhea in Last 2 Weeks", "type": "select", "required": false, "options": ["Yes", "No", "Unknown"] },
+        { "id": "ari_last2w", "label": "ARI in Last 2 Weeks", "type": "select", "required": false, "options": ["Yes", "No", "Unknown"] },
+        { "id": "immunization_status", "label": "Immunization Status", "type": "select", "required": false, "options": ["Complete", "Partial", "Not done", "Unknown"] },
+        { "id": "vitamin_a_due", "label": "Vitamin A Due", "type": "select", "required": false, "options": ["No", "Yes", "Unknown"] }
       ]
     },
     {
-      "id": "illness",
-      "title": "Recent Illness",
+      "id": "plan_followup",
+      "title": "4. Plan and Follow-up",
       "fields": [
-        { "id": "diarrhea_last2w", "label": "Diarrhea in last 2 weeks", "type": "select", "required": false, "options": ["Yes", "No", "Unknown"] },
-        { "id": "ari_last2w", "label": "ARI in last 2 weeks", "type": "select", "required": false, "options": ["Yes", "No", "Unknown"] }
+        { "id": "advice_given", "label": "Advice Given to Caregiver", "type": "textarea", "required": false },
+        { "id": "referral_needed", "label": "Referral Needed", "type": "select", "required": false, "options": ["No", "Yes"] },
+        { "id": "next_visit_date", "label": "Next Visit Date", "type": "date", "required": false }
       ]
     }
   ]
