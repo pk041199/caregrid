@@ -1,0 +1,10 @@
+name: caregrid_supabase_dataset
+description: Shared Supabase dataset connection for the CareGrid app family.
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  supabase_flutter: ^2.12.0

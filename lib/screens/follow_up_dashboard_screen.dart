@@ -41,6 +41,8 @@ class _FollowUpDashboardScreenState extends State<FollowUpDashboardScreen> {
   DateTime? _toDate;
   DateTime? _selectedDay;
   DateTime _calendarMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+  bool _showOverdueOnly = false;
+  final Set<String> _selectedRowKeys = <String>{};
   static const List<String> _statusFilters = [
     'All',
     'Planned',
@@ -152,6 +154,16 @@ class _FollowUpDashboardScreenState extends State<FollowUpDashboardScreen> {
     return 'Upcoming';
   }
 
+  String _rowKey(Map<String, String> row) {
+    return row['id'] ?? [
+      row['familyId'] ?? '',
+      row['memberName'] ?? '',
+      row['formId'] ?? '',
+      row['followUpDate'] ?? '',
+      row['scope'] ?? '',
+    ].join('|');
+  }
+
   List<Map<String, String>> _filteredEntries() {
     final now = DateTime.now();
     final from = _fromDate == null ? null : _startOfDay(_fromDate!);
@@ -170,6 +182,8 @@ class _FollowUpDashboardScreenState extends State<FollowUpDashboardScreen> {
           from == null || (dueDay != null && !dueDay.isBefore(from));
       final toMatch = to == null || (dueDay != null && !dueDay.isAfter(to));
       final dayMatch = selected == null || (dueDay != null && dueDay == selected);
+      final overdueOnlyMatch = !_showOverdueOnly ||
+          (due != null && due.isBefore(DateTime.now()) && (e['status'] ?? 'Planned') == 'Planned');
       final formId = (e['formId'] ?? '').trim().toLowerCase();
       final formLane = {'anc', 'pnc', 'new_born'}.contains(formId);
       final laneMatch = _doctorWorkflow
@@ -181,6 +195,7 @@ class _FollowUpDashboardScreenState extends State<FollowUpDashboardScreen> {
           fromMatch &&
           toMatch &&
           dayMatch &&
+          overdueOnlyMatch &&
           laneMatch;
     }).toList();
     filtered.sort((a, b) {
@@ -433,6 +448,55 @@ class _FollowUpDashboardScreenState extends State<FollowUpDashboardScreen> {
     setState(() => _toDate = picked);
   }
 
+  void _toggleSelection(Map<String, String> row) {
+    final key = _rowKey(row);
+    setState(() {
+      if (_selectedRowKeys.contains(key)) {
+        _selectedRowKeys.remove(key);
+      } else {
+        _selectedRowKeys.add(key);
+      }
+    });
+  }
+
+  Future<void> _applyBulkAction(String action) async {
+    if (_selectedRowKeys.isEmpty) return;
+
+    final selectedRows = _rows.where((row) => _selectedRowKeys.contains(_rowKey(row))).toList();
+
+    if (action == 'completed') {
+      setState(() {
+        for (final row in selectedRows) {
+          row['status'] = 'Completed';
+        }
+      });
+    } else if (action == 'missed') {
+      setState(() {
+        for (final row in selectedRows) {
+          row['status'] = 'Missed';
+        }
+      });
+    } else if (action == 'reschedule') {
+      final initial = DateTime.now();
+      final picked = await showDatePicker(
+        context: context,
+        initialDate: initial,
+        firstDate: DateTime(2020),
+        lastDate: DateTime(2100),
+      );
+      if (picked == null || !mounted) return;
+      setState(() {
+        for (final row in selectedRows) {
+          row['followUpDate'] = picked.toIso8601String().split('T').first;
+          row['status'] = 'Rescheduled';
+        }
+      });
+    }
+
+    _selectedRowKeys.clear();
+    _notifyEntriesChanged();
+  }
+
   Future<void> _openStatusSheet(Map<String, String> row) async {
     await showModalBottomSheet<void>(
       context: context,
@@ -547,6 +611,21 @@ class _FollowUpDashboardScreenState extends State<FollowUpDashboardScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Follow-up Dashboard'),
+        actions: [
+          if (_selectedRowKeys.isNotEmpty)
+            PopupMenuButton<String>(
+              onSelected: _applyBulkAction,
+              itemBuilder: (context) => [
+                const PopupMenuItem(value: 'completed', child: Text('Mark Completed')),
+                const PopupMenuItem(value: 'missed', child: Text('Mark Missed')),
+                const PopupMenuItem(value: 'reschedule', child: Text('Reschedule')),
+              ],
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                child: Center(child: Text('Actions')),
+              ),
+            ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -633,6 +712,12 @@ class _FollowUpDashboardScreenState extends State<FollowUpDashboardScreen> {
                       if (v == null) return;
                       setState(() => _selectedScope = v);
                     },
+                  ),
+                  const SizedBox(width: 10),
+                  FilterChip(
+                    label: const Text('Overdue only'),
+                    selected: _showOverdueOnly,
+                    onSelected: (value) => setState(() => _showOverdueOnly = value),
                   ),
                   const SizedBox(width: 10),
                   OutlinedButton.icon(
@@ -725,8 +810,12 @@ class _FollowUpDashboardScreenState extends State<FollowUpDashboardScreen> {
                                         .split('T')
                                         .first ??
                                     reviewedAtRaw);
+                        final selected = _selectedRowKeys.contains(_rowKey(row));
                         return Card(
                           child: ListTile(
+                            leading: selected
+                                ? const Icon(Icons.check_circle, color: Colors.green)
+                                : const Icon(Icons.radio_button_unchecked),
                             title: Text(
                               '${row['formCategory'] ?? row['formId'] ?? '-'} | ${row['memberName'] ?? '-'}',
                             ),
@@ -775,8 +864,21 @@ class _FollowUpDashboardScreenState extends State<FollowUpDashboardScreen> {
                               ],
                             ),
                             isThreeLine: true,
-                            onTap: () => _openFormOrStatus(row),
-                            onLongPress: () => _openStatusSheet(row),
+                            onTap: () {
+                              if (_selectedRowKeys.isNotEmpty) {
+                                _toggleSelection(row);
+                              } else {
+                                _openFormOrStatus(row);
+                              }
+                            },
+                            onLongPress: () {
+                              _toggleSelection(row);
+                              if (_selectedRowKeys.isNotEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Bulk actions enabled')),
+                                );
+                              }
+                            },
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 12,
                               vertical: 4,

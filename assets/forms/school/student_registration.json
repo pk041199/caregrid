@@ -1,0 +1,131 @@
+{
+  "id": "school_student_registration",
+  "title": "Student Registration",
+  "description": "Register a student for school health screening",
+  "version": 1,
+  "workflow": {
+    "mode": "sectioned",
+    "showProgress": true,
+    "allowJumpToIncomplete": true
+  },
+  "followup": {
+    "enabled": true,
+    "defaultCycleDays": 180,
+    "cycleOptionsDays": [90, 180, 365]
+  },
+  "sections": [
+    {
+      "id": "student_info",
+      "title": "Student Information",
+      "fields": [
+        {
+          "id": "full_name",
+          "label": "Full Name",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "date_of_birth",
+          "label": "Date of Birth",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "gender",
+          "label": "Gender",
+          "type": "select",
+          "options": ["Male", "Female"],
+          "required": true
+        },
+        {
+          "id": "class",
+          "label": "Class",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "section",
+          "label": "Section",
+          "type": "text",
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "anthropometry",
+      "title": "Anthropometry",
+      "fields": [
+        {
+          "id": "height",
+          "label": "Height (cm)",
+          "type": "number",
+          "required": false
+        },
+        {
+          "id": "weight",
+          "label": "Weight (kg)",
+          "type": "number",
+          "required": false
+        },
+        {
+          "id": "bmi",
+          "label": "BMI (Auto-calculated)",
+          "type": "number",
+          "required": false,
+          "readOnly": true
+        }
+      ]
+    },
+    {
+      "id": "screening",
+      "title": "Health Screening",
+      "fields": [
+        {
+          "id": "vision_status",
+          "label": "Vision Status",
+          "type": "select",
+          "options": ["Normal", "Defective", "Needs Correction"],
+          "required": false
+        },
+        {
+          "id": "hearing_status",
+          "label": "Hearing Status",
+          "type": "select",
+          "options": ["Normal", "Defective"],
+          "required": false
+        },
+        {
+          "id": "dental_status",
+          "label": "Dental Status",
+          "type": "select",
+          "options": ["Healthy", "Caries", "Needs Treatment"],
+          "required": false
+        },
+        {
+          "id": "hemoglobin",
+          "label": "Hemoglobin (g/dL)",
+          "type": "number",
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "beneficiary_id",
+      "title": "Beneficiary Identification",
+      "fields": [
+        {
+          "id": "abha_number",
+          "label": "ABHA Number",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "aadhaar_last_4",
+          "label": "Aadhaar (Last 4 digits)",
+          "type": "text",
+          "required": false
+        }
+      ]
+    }
+  ]
+}

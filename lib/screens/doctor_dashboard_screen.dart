@@ -12,7 +12,14 @@ import '../services/auth_service.dart';
 import '../services/medical_role_policy.dart';
 
 class DoctorDashboardScreen extends StatefulWidget {
-  const DoctorDashboardScreen({super.key});
+  const DoctorDashboardScreen({
+    super.key,
+    this.showBackButton = true,
+    this.onSignOut,
+  });
+
+  final bool showBackButton;
+  final VoidCallback? onSignOut;
 
   @override
   State<DoctorDashboardScreen> createState() => _DoctorDashboardScreenState();
@@ -26,6 +33,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
   final AuthService _authService = AuthService();
   String _roleLabel = '';
   bool _canReview = false;
+  String _caseFilter = 'All';
 
   @override
   void initState() {
@@ -137,12 +145,82 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     return 'Previous entry available';
   }
 
+  List<_DoctorCase> get _visibleCases {
+    if (_caseFilter == 'All') return _cases;
+    return _cases.where((c) => _gridLabel(c.storageKey) == _caseFilter).toList();
+  }
+
+  List<String> get _gridFilters {
+    final labels = _cases.map((c) => _gridLabel(c.storageKey)).toSet().toList()
+      ..sort();
+    return ['All', ...labels];
+  }
+
+  String _gridLabel(String storageKey) {
+    var label = storageKey
+        .replaceFirst('caregrid_', '')
+        .replaceFirst('_families', '')
+        .replaceAll('_', ' ');
+    if (label.trim().isEmpty) return 'Pulled grid';
+    return label
+        .split(' ')
+        .where((part) => part.trim().isNotEmpty)
+        .map((part) => part[0].toUpperCase() + part.substring(1))
+        .join(' ');
+  }
+
+  Widget _workspaceHeader() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 700;
+        final cards = [
+          _DoctorMetricCard(
+            title: 'Pulled grids',
+            value: _gridFilters.length <= 1 ? '0' : '${_gridFilters.length - 1}',
+            detail: 'Field app queues',
+            icon: Icons.grid_view_outlined,
+          ),
+          _DoctorMetricCard(
+            title: 'Approvals',
+            value: '${_cases.length}',
+            detail: 'Cases waiting for doctor action',
+            icon: Icons.fact_check_outlined,
+          ),
+          const _DoctorMetricCard(
+            title: 'Consult',
+            value: 'Ready',
+            detail: 'Review, prescribe, and plan follow-up',
+            icon: Icons.video_call_outlined,
+          ),
+        ];
+        if (compact) {
+          return Column(
+            children: [
+              for (final card in cards) ...[
+                card,
+                const SizedBox(height: 10),
+              ],
+            ],
+          );
+        }
+        return Row(
+          children: [
+            for (final card in cards) ...[
+              Expanded(child: card),
+              if (card != cards.last) const SizedBox(width: 12),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _openDoctorReview(_DoctorCase c) async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => FormViewerScreen(
-          assetPath: 'assets/forms/clinical_history_ncd.json',
+          assetPath: 'assets/forms/clinical_history_follow_up.json',
           entityLabel: '${c.memberName} (${c.familyId})',
           contextData: {
             'previousEntries': c.history,
@@ -446,15 +524,23 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final visibleCases = _visibleCases;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Doctor Dashboard'),
+        automaticallyImplyLeading: widget.showBackButton,
+        title: const Text('CareGrid Doctor'),
         actions: [
           IconButton(
             onPressed: _loadCases,
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh',
           ),
+          if (widget.onSignOut != null)
+            IconButton(
+              onPressed: widget.onSignOut,
+              icon: const Icon(Icons.logout),
+              tooltip: 'Logout',
+            ),
         ],
       ),
       body: Padding(
@@ -471,17 +557,52 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                     ? const Center(
                         child: Text('No NCD follow-up cases available from field entries.'),
                       )
-                    : ListView.separated(
-                        itemCount: _cases.length,
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _workspaceHeader(),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Pull grids and approve consults',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: _gridFilters
+                                  .map(
+                                    (label) => Padding(
+                                      padding: const EdgeInsets.only(right: 8),
+                                      child: ChoiceChip(
+                                        label: Text(label),
+                                        selected: _caseFilter == label,
+                                        onSelected: (_) {
+                                          setState(() => _caseFilter = label);
+                                        },
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Expanded(
+                            child: ListView.separated(
+                        itemCount: visibleCases.length,
                         separatorBuilder: (context, index) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {
-                          final c = _cases[index];
+                          final c = visibleCases[index];
                           final latestDate = _latestDate(c.history);
                           return Card(
                             child: ListTile(
                             title: Text('${c.memberName} | Family ${c.familyId}'),
                             subtitle: Text(
                                 'Role: $_roleLabel\n'
+                                'Grid: ${_gridLabel(c.storageKey)}\n'
                                 'Last update: ${latestDate == DateTime.fromMillisecondsSinceEpoch(0) ? '-' : latestDate.toIso8601String().split('T').first}\n'
                                 'Latest: ${_latestSummary(c.history)}',
                               ),
@@ -489,12 +610,55 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                               trailing: ElevatedButton.icon(
                                 onPressed: () => _openDoctorReview(c),
                                 icon: const Icon(Icons.medical_services_outlined),
-                                label: const Text('Review'),
+                                label: const Text('Approve'),
                               ),
                             ),
                           );
                         },
                       ),
+                          ),
+                        ],
+                      ),
+      ),
+    );
+  }
+}
+
+class _DoctorMetricCard extends StatelessWidget {
+  const _DoctorMetricCard({
+    required this.title,
+    required this.value,
+    required this.detail,
+    required this.icon,
+  });
+
+  final String title;
+  final String value;
+  final String detail;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            Icon(icon, size: 30),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 4),
+                  Text(value, style: const TextStyle(fontSize: 20)),
+                  Text(detail),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

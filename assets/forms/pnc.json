@@ -1,73 +1,42 @@
 {
   "id": "pnc",
-  "title": "Postnatal Care (PNC) Agenda-Based Visit",
-  "version": 2,
+  "title": "PNC Main Form",
+  "version": 1,
   "followup": {
     "enabled": true,
-    "defaultCycleDays": 7,
-    "cycleOptionsDays": [2, 7, 14, 42]
+    "defaultCycleDays": 14,
+    "cycleOptionsDays": [7, 14, 28, 42]
   },
   "sections": [
     {
-      "id": "mcp_reference",
-      "title": "0. MCP Card Reference",
+      "id": "delivery_context",
+      "title": "1. Delivery and Postnatal Context",
       "fields": [
-        { "id": "mcp_card_available", "label": "MCP Card Available", "type": "select", "required": true, "options": ["Yes", "No"] },
-        { "id": "mcp_card_number", "label": "MCP Card Number", "type": "text", "required": false },
-        { "id": "mcp_last_updated_on", "label": "Last MCP Entry Date", "type": "date", "required": false }
+        { "id": "visit_date", "label": "Visit Date", "type": "date", "required": true },
+        { "id": "delivery_date", "label": "Delivery Date", "type": "date", "required": false },
+        { "id": "delivery_type", "label": "Type of Delivery", "type": "select", "required": false, "options": ["Normal Vaginal Delivery", "LSCS", "Assisted", "Other"] },
+        { "id": "postnatal_day", "label": "Postnatal Day", "type": "number", "required": false }
       ]
     },
     {
-      "id": "visit_context",
-      "title": "1. Visit Context",
+      "id": "maternal_status",
+      "title": "2. Maternal Status",
       "fields": [
-        { "id": "postnatal_day", "label": "Postnatal Day", "type": "number", "required": true },
-        { "id": "date_of_delivery", "label": "Date of Delivery", "type": "date", "required": false },
-        { "id": "mode_of_delivery", "label": "Mode of Delivery", "type": "select", "required": false, "options": ["Normal", "LSCS", "Assisted"] },
-        { "id": "current_complaints", "label": "Current Complaints", "type": "textarea", "required": true }
-      ]
-    },
-    {
-      "id": "maternal_danger_screen",
-      "title": "2. Maternal Danger Sign Screen",
-      "fields": [
-        { "id": "heavy_bleeding", "label": "Heavy Vaginal Bleeding", "type": "select", "required": false, "options": ["No", "Yes"] },
+        { "id": "mother_complaints", "label": "Mother Complaints", "type": "textarea", "required": false },
+        { "id": "bleeding", "label": "Abnormal Bleeding", "type": "select", "required": false, "options": ["No", "Yes"] },
         { "id": "fever", "label": "Fever", "type": "select", "required": false, "options": ["No", "Yes"] },
-        { "id": "foul_lochia", "label": "Foul-smelling Lochia", "type": "select", "required": false, "options": ["No", "Yes"] },
-        { "id": "severe_headache_blur", "label": "Severe Headache/Blurred Vision", "type": "select", "required": false, "options": ["No", "Yes"] },
-        { "id": "danger_sign_notes", "label": "Danger Sign Notes", "type": "textarea", "required": false }
+        { "id": "breastfeeding_issues", "label": "Breastfeeding Issues", "type": "textarea", "required": false },
+        { "id": "mother_examination", "label": "Mother Examination", "type": "textarea", "required": false }
       ]
     },
     {
-      "id": "maternal_exam",
-      "title": "3. Maternal Examination",
+      "id": "baby_and_plan",
+      "title": "3. Baby and Follow-up Plan",
       "fields": [
-        { "id": "temperature", "label": "Temperature (F)", "type": "number", "required": false, "validation": { "min": 90, "max": 110 } },
-        { "id": "pulse", "label": "Pulse/min", "type": "number", "required": false, "validation": { "min": 30, "max": 220 } },
-        { "id": "bp", "label": "Blood Pressure", "type": "text", "required": true },
-        { "id": "breastfeeding_status", "label": "Breastfeeding Status", "type": "select", "required": false, "options": ["Established", "Difficulty", "Not breastfeeding"] },
-        { "id": "wound_status", "label": "Perineal/LSCS Wound Status", "type": "textarea", "required": false }
-      ]
-    },
-    {
-      "id": "newborn_review",
-      "title": "4. Newborn Review",
-      "fields": [
-        { "id": "baby_alive", "label": "Baby Alive", "type": "select", "required": true, "options": ["Yes", "No"] },
-        { "id": "current_weight", "label": "Current Weight (kg)", "type": "number", "required": false, "validation": { "min": 1, "max": 12 } },
-        { "id": "feeding_well", "label": "Feeding Well", "type": "select", "required": false, "options": ["Yes", "No"] },
-        { "id": "jaundice", "label": "Jaundice", "type": "select", "required": false, "options": ["No", "Yes"] },
-        { "id": "newborn_danger_signs", "label": "Newborn Danger Signs", "type": "textarea", "required": false }
-      ]
-    },
-    {
-      "id": "plan",
-      "title": "5. Plan and Follow-up",
-      "fields": [
-        { "id": "immunization_supplements", "label": "Immunization/Supplement Actions", "type": "textarea", "required": false },
-        { "id": "counseling", "label": "Counseling Given", "type": "textarea", "required": false },
-        { "id": "referral_needed", "label": "Referral Needed", "type": "select", "required": false, "options": ["No", "Yes"] },
-        { "id": "next_visit_date", "label": "Next Visit Date", "type": "date", "required": true }
+        { "id": "baby_status", "label": "Baby Status", "type": "textarea", "required": false },
+        { "id": "contraception_counselling", "label": "Contraception Counselling", "type": "textarea", "required": false },
+        { "id": "advice", "label": "Advice", "type": "textarea", "required": false },
+        { "id": "follow_up_date", "label": "Follow-up Date", "type": "date", "required": false }
       ]
     }
   ]

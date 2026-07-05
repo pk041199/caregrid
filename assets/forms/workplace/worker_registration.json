@@ -1,0 +1,170 @@
+{
+  "id": "workplace_worker_registration",
+  "title": "Worker Registration",
+  "description": "Register a worker for occupational health screening",
+  "version": 1,
+  "workflow": {
+    "mode": "sectioned",
+    "showProgress": true,
+    "allowJumpToIncomplete": true
+  },
+  "followup": {
+    "enabled": true,
+    "defaultCycleDays": 365,
+    "cycleOptionsDays": [180, 365]
+  },
+  "sections": [
+    {
+      "id": "worker_info",
+      "title": "Worker Information",
+      "fields": [
+        {
+          "id": "full_name",
+          "label": "Full Name",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "date_of_birth",
+          "label": "Date of Birth",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "gender",
+          "label": "Gender",
+          "type": "select",
+          "options": ["Male", "Female"],
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "occupational_info",
+      "title": "Occupational Information",
+      "fields": [
+        {
+          "id": "occupation",
+          "label": "Occupation",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "job_role",
+          "label": "Job Role",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "years_of_exposure",
+          "label": "Years of Exposure",
+          "type": "number",
+          "required": false
+        },
+        {
+          "id": "work_schedule",
+          "label": "Work Schedule",
+          "type": "select",
+          "options": ["Day shift", "Night shift", "Rotating shifts", "Other"],
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "health_screening",
+      "title": "Occupational Health Screening",
+      "fields": [
+        {
+          "id": "height",
+          "label": "Height (cm)",
+          "type": "number",
+          "required": false
+        },
+        {
+          "id": "weight",
+          "label": "Weight (kg)",
+          "type": "number",
+          "required": false
+        },
+        {
+          "id": "bmi",
+          "label": "BMI (Auto-calculated)",
+          "type": "number",
+          "required": false,
+          "readOnly": true
+        },
+        {
+          "id": "blood_pressure",
+          "label": "Blood Pressure (mmHg)",
+          "type": "text",
+          "placeholder": "Systolic/Diastolic",
+          "required": false
+        },
+        {
+          "id": "blood_glucose",
+          "label": "Blood Glucose (mg/dL)",
+          "type": "number",
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "occupational_health",
+      "title": "Occupational Health Assessment",
+      "fields": [
+        {
+          "id": "respiratory_status",
+          "label": "Respiratory Status",
+          "type": "select",
+          "options": ["Normal", "Abnormal", "Symptoms Present"],
+          "required": false
+        },
+        {
+          "id": "hearing_status",
+          "label": "Hearing Status",
+          "type": "select",
+          "options": ["Normal", "Abnormal"],
+          "required": false
+        },
+        {
+          "id": "vision_status",
+          "label": "Vision Status",
+          "type": "select",
+          "options": ["Normal", "Defective", "Needs Correction"],
+          "required": false
+        },
+        {
+          "id": "ppe_usage",
+          "label": "PPE Usage",
+          "type": "select",
+          "options": ["Always", "Sometimes", "Never"],
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "beneficiary_id",
+      "title": "Beneficiary Identification",
+      "fields": [
+        {
+          "id": "abha_number",
+          "label": "ABHA Number",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "aadhaar_last_4",
+          "label": "Aadhaar (Last 4 digits)",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "mobile_number",
+          "label": "Mobile Number",
+          "type": "text",
+          "required": false
+        }
+      ]
+    }
+  ]
+}

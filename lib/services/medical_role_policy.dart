@@ -8,6 +8,7 @@ class MedicalRolePolicy {
     if (role.contains('manager')) return 'manager';
     if (role.contains('curator')) return 'curator';
     if (role.contains('doctor') || role.contains('physician')) return 'doctor';
+    if (role.contains('patient')) return 'patient';
     if (role.contains('viewer') || role.contains('read only')) return 'viewer';
     if (role.contains('field') || role.contains('collector')) return 'collector';
     return role;
@@ -23,6 +24,8 @@ class MedicalRolePolicy {
         return 'Clinical Curator';
       case 'doctor':
         return 'Doctor';
+      case 'patient':
+        return 'Patient';
       case 'viewer':
         return 'Read-only Viewer';
       case 'collector':

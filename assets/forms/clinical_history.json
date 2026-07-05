@@ -1,7 +1,7 @@
 {
   "id": "clinical_history",
-  "title": "Clinical History (Agenda-Based)",
-  "version": 3,
+  "title": "Detailed Clinical History and Examination",
+  "version": 1,
   "workflow": {
     "mode": "sectioned",
     "showProgress": true,
@@ -14,96 +14,76 @@
   },
   "sections": [
     {
-      "id": "chief_agenda",
-      "title": "1. Chief Concern and Agenda",
+      "id": "visit_context",
+      "title": "1. Visit Context",
       "fields": [
-        { "id": "chief_complaint", "label": "Chief Complaint (patient words)", "type": "textarea", "required": true, "roles": ["collector", "curator", "doctor", "manager", "creator"] },
-        { "id": "duration", "label": "Duration", "type": "text", "required": false },
-        { "id": "care_goal", "label": "Patient Goal for this Visit", "type": "text", "required": true, "roles": ["collector", "curator", "doctor", "manager", "creator"] }
+        { "id": "visit_date", "label": "Visit Date", "type": "date", "required": true },
+        { "id": "visit_place", "label": "Visit Place", "type": "select", "required": true, "options": ["Field Clinic", "Workplace", "School", "Anganwadi", "Camp", "Home Visit", "OPD"] },
+        { "id": "informant", "label": "Informant / Attender", "type": "text", "required": false }
       ]
     },
     {
-      "id": "targeted_history",
-      "title": "2. Targeted History",
-      "fields": [
-        { "id": "history_present_illness", "label": "History of Present Illness", "type": "textarea", "required": true },
-        { "id": "associated_symptoms", "label": "Associated Symptoms", "type": "textarea", "required": false },
-        { "id": "red_flag_screen", "label": "Any Danger Signs", "type": "select", "required": true, "options": ["No", "Yes"] },
-        { "id": "danger_sign_notes", "label": "Danger Sign Details", "type": "textarea", "required": false }
-      ]
-    },
-    {
-      "id": "past_and_drugs",
-      "title": "3. Past Illness and Drugs",
+      "id": "presenting_history",
+      "title": "2. Presenting History",
       "fields": [
         {
-          "id": "known_comorbidities_ncd",
-          "label": "Known Comorbidities (NCD) - add one by one",
+          "id": "history_items",
+          "label": "Presenting complaints - add one by one",
+          "type": "repeatable_group",
+          "required": true,
+          "itemFields": [
+            { "id": "complaint", "label": "Complaint", "type": "text" },
+            { "id": "history", "label": "History", "type": "textarea" },
+            { "id": "duration", "label": "Duration", "type": "text" },
+            { "id": "frequency", "label": "Frequency", "type": "text" },
+            { "id": "associated_symptoms", "label": "Associated Symptoms", "type": "textarea" }
+          ]
+        },
+        { "id": "hpi_summary", "label": "History of Present Illness Summary", "type": "textarea", "required": true },
+        { "id": "red_flags", "label": "Any danger signs", "type": "select", "required": true, "options": ["No", "Yes"] },
+        { "id": "red_flag_notes", "label": "Danger sign details", "type": "textarea", "required": false }
+      ]
+    },
+    {
+      "id": "past_personal_history",
+      "title": "3. Past and Personal History",
+      "fields": [
+        { "id": "past_history", "label": "Past History", "type": "textarea", "required": false },
+        { "id": "personal_history", "label": "Personal History", "type": "textarea", "required": false },
+        { "id": "drug_history", "label": "Drug / Treatment History", "type": "textarea", "required": false },
+        { "id": "allergy_history", "label": "Allergy History", "type": "textarea", "required": false },
+        { "id": "family_history", "label": "Family History", "type": "textarea", "required": false }
+      ]
+    },
+    {
+      "id": "clinical_examination",
+      "title": "4. Examination",
+      "fields": [
+        { "id": "general_examination", "label": "General Examination", "type": "textarea", "required": false },
+        { "id": "vitals", "label": "Vitals", "type": "textarea", "required": false },
+        {
+          "id": "system_wise_examination",
+          "label": "System wise examination",
           "type": "repeatable_group",
           "required": false,
           "itemFields": [
-            {
-              "id": "disease",
-              "label": "Disease",
-              "type": "select",
-              "options": [
-                "Diabetes",
-                "Hypertension",
-                "CKD",
-                "IHD",
-                "Stroke",
-                "COPD",
-                "Asthma",
-                "Oral Cancer",
-                "Breast Cancer",
-                "Cervical Cancer",
-                "Other"
-              ]
-            },
-            { "id": "other_disease_name", "label": "If Other, specify disease", "type": "text" },
-            { "id": "duration", "label": "Duration", "type": "text" },
-            { "id": "on_treatment", "label": "On treatment?", "type": "select", "options": ["No", "Yes"] },
-            {
-              "id": "medications",
-              "label": "Medication details (one by one)",
-              "type": "repeatable_group",
-              "itemFields": [
-                { "id": "name", "label": "Medicine", "type": "text" },
-                { "id": "dose", "label": "Dose", "type": "text" },
-                { "id": "frequency", "label": "Frequency", "type": "select", "options": ["OD", "BD", "TDS", "QID", "HS", "SOS", "Other"] },
-                { "id": "duration", "label": "Duration", "type": "text" }
-              ]
-            }
+            { "id": "system", "label": "System", "type": "select", "options": ["CVS", "RS", "CNS", "PA", "ENT", "Skin", "Musculoskeletal", "Obstetric", "Other"] },
+            { "id": "findings", "label": "Findings", "type": "textarea" }
           ]
-        },
-        { "id": "past_illness", "label": "Past Illnesses", "type": "textarea", "required": false },
-        { "id": "hospitalizations", "label": "Previous Hospitalizations", "type": "textarea", "required": false },
-        { "id": "surgeries", "label": "Past Surgeries", "type": "textarea", "required": false },
-        { "id": "current_meds", "label": "Current Medications", "type": "textarea", "required": false },
-        { "id": "drug_allergy", "label": "Drug Allergy", "type": "select", "required": true, "options": ["No", "Yes", "Unknown"] },
-        { "id": "allergy_details", "label": "Allergy Details", "type": "textarea", "required": false }
-      ]
-    },
-    {
-      "id": "lifestyle_context",
-      "title": "4. Lifestyle and Context",
-      "fields": [
-        { "id": "tobacco", "label": "Tobacco Use", "type": "select", "required": false, "options": ["Never", "Former", "Current"] },
-        { "id": "alcohol", "label": "Alcohol Use", "type": "select", "required": false, "options": ["Never", "Former", "Current"] },
-        { "id": "occupation_risk", "label": "Occupation Exposure Risk", "type": "select", "required": false, "options": ["Low", "Moderate", "High"] },
-        { "id": "family_history", "label": "Relevant Family History", "type": "textarea", "required": false }
+        }
       ]
     },
     {
       "id": "assessment_plan",
-      "title": "5. Clinical Assessment and Plan",
+      "title": "5. Diagnosis and Plan",
       "fields": [
-        { "id": "working_diagnosis", "label": "Working Diagnosis", "type": "textarea", "required": true, "roles": ["doctor", "curator", "manager", "creator"] },
-        { "id": "investigations_advised", "label": "Investigations Advised", "type": "textarea", "required": false },
-        { "id": "treatment_plan", "label": "Treatment / Advice Plan", "type": "textarea", "required": true, "roles": ["doctor", "curator", "manager", "creator"] },
+        { "id": "diagnosis_text", "label": "Diagnosis", "type": "textarea", "required": true },
+        { "id": "icd10_code", "label": "ICD-10 Code", "type": "text", "required": false },
+        { "id": "investigations", "label": "Investigations", "type": "textarea", "required": false },
+        { "id": "rx_treatment", "label": "Rx / Treatment", "type": "textarea", "required": true },
+        { "id": "treatment_advice", "label": "Treatment Advice", "type": "textarea", "required": false },
         { "id": "follow_up_date", "label": "Follow-up Date", "type": "date", "required": false },
-        { "id": "referral_needed", "label": "Referral Needed", "type": "select", "required": true, "options": ["No", "Yes"], "roles": ["doctor", "curator", "manager", "creator"] },
-        { "id": "referral_notes", "label": "Referral Notes", "type": "textarea", "required": false }
+        { "id": "follow_up_advice", "label": "Follow-up Advice", "type": "textarea", "required": false }
       ]
     }
   ]

@@ -186,27 +186,41 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
 
   static const List<String> _memberFormAssets = [
     'assets/forms/clinical_history.json',
+    'assets/forms/clinical_history_follow_up.json',
     'assets/forms/ncd.json',
+    'assets/forms/ncd_follow_up.json',
     'assets/forms/anc.json',
+    'assets/forms/anc_follow_up.json',
     'assets/forms/pnc.json',
+    'assets/forms/pnc_follow_up.json',
     'assets/forms/new_born.json',
+    'assets/forms/new_born_follow_up.json',
     'assets/forms/under_5.json',
+    'assets/forms/under_5_follow_up.json',
   ];
 
   static const List<String> _followUpFormIds = [
-    'anc',
-    'pnc',
-    'new_born',
+    'clinical_history_follow_up',
+    'ncd_follow_up',
+    'anc_follow_up',
+    'pnc_follow_up',
+    'new_born_follow_up',
+    'under_5_follow_up',
   ];
 
   static const Map<String, String> _formIdToAsset = {
     'clinical_history': 'assets/forms/clinical_history.json',
-    'clinical_history_ncd': 'assets/forms/clinical_history_ncd.json',
+    'clinical_history_follow_up': 'assets/forms/clinical_history_follow_up.json',
     'ncd': 'assets/forms/ncd.json',
+    'ncd_follow_up': 'assets/forms/ncd_follow_up.json',
     'anc': 'assets/forms/anc.json',
+    'anc_follow_up': 'assets/forms/anc_follow_up.json',
     'pnc': 'assets/forms/pnc.json',
+    'pnc_follow_up': 'assets/forms/pnc_follow_up.json',
     'new_born': 'assets/forms/new_born.json',
+    'new_born_follow_up': 'assets/forms/new_born_follow_up.json',
     'under_5': 'assets/forms/under_5.json',
+    'under_5_follow_up': 'assets/forms/under_5_follow_up.json',
   };
 
   final AuthService _authService = AuthService();
@@ -523,6 +537,7 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
             'ancBaseline': targetMember['ancBaseline'],
             'previousEntries': _clinicalNcdHistoryForMember(targetMember),
             'sameDayForms': _sameDaySubmissionForMember(targetMember),
+            'visitOptionsByFormId': _visitOptionsByFormIdForMember(targetMember),
           },
         ),
       ),
@@ -677,30 +692,45 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
     final age = int.tryParse((member['age'] ?? '').trim()) ?? 0;
     final allowed = <String>{
       'clinical_history',
+      'clinical_history_follow_up',
       'ncd',
+      'ncd_follow_up',
       'anc',
+      'anc_follow_up',
       'pnc',
+      'pnc_follow_up',
       'new_born',
+      'new_born_follow_up',
       'under_5',
+      'under_5_follow_up',
     };
 
     if (age < 10) {
       allowed.remove('anc');
+      allowed.remove('anc_follow_up');
       allowed.remove('pnc');
+      allowed.remove('pnc_follow_up');
       allowed.remove('ncd');
+      allowed.remove('ncd_follow_up');
     }
 
     if (sex != 'female') {
       allowed.remove('anc');
+      allowed.remove('anc_follow_up');
       allowed.remove('pnc');
+      allowed.remove('pnc_follow_up');
       allowed.remove('new_born');
+      allowed.remove('new_born_follow_up');
     } else {
       if (pregnancy != 'pregnant') {
         allowed.remove('anc');
+        allowed.remove('anc_follow_up');
         allowed.remove('new_born');
+        allowed.remove('new_born_follow_up');
       }
       if (pregnancy != 'postpartum') {
         allowed.remove('pnc');
+        allowed.remove('pnc_follow_up');
       }
     }
     return allowed.toList();
@@ -775,6 +805,42 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
         .toList();
   }
 
+  static const Map<String, List<String>> _visitFamilies = {
+    'clinical_history': ['clinical_history', 'clinical_history_follow_up'],
+    'clinical_history_follow_up': ['clinical_history', 'clinical_history_follow_up'],
+    'ncd': ['ncd', 'ncd_follow_up'],
+    'ncd_follow_up': ['ncd', 'ncd_follow_up'],
+    'anc': ['anc', 'anc_follow_up'],
+    'anc_follow_up': ['anc', 'anc_follow_up'],
+    'pnc': ['pnc', 'pnc_follow_up'],
+    'pnc_follow_up': ['pnc', 'pnc_follow_up'],
+    'new_born': ['new_born', 'new_born_follow_up'],
+    'new_born_follow_up': ['new_born', 'new_born_follow_up'],
+    'under_5': ['under_5', 'under_5_follow_up'],
+    'under_5_follow_up': ['under_5', 'under_5_follow_up'],
+  };
+
+  Map<String, List<String>> _visitOptionsByFormIdForMember(
+    Map<String, String> member,
+  ) {
+    final log = _submissionLogForMember(member);
+    final result = <String, List<String>>{};
+    for (final family in _visitFamilies.entries) {
+      final options = log.where((entry) {
+        final formId = (entry['formId'] ?? '').toString();
+        return family.value.contains(formId);
+      }).map((entry) {
+        final title = (entry['formTitle'] ?? entry['formId'] ?? '').toString();
+        final submitted = (entry['submittedAt'] ?? '').toString().split('T').first;
+        final followUpDate = (entry['followUpDate'] ?? '').toString();
+        final suffix = followUpDate.isEmpty ? '' : ' | follow-up $followUpDate';
+        return '$title | visit $submitted$suffix';
+      }).toList();
+      result[family.key] = options;
+    }
+    return result;
+  }
+
   Future<void> _openQuickFollowUpForMember({
     required Map<String, dynamic> family,
     required Map<String, String> member,
@@ -799,6 +865,7 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
         'ancBaseline': member['ancBaseline'],
         'previousEntries': _clinicalNcdHistoryForMember(member),
         'sameDayForms': _sameDaySubmissionForMember(member),
+        'visitOptionsByFormId': _visitOptionsByFormIdForMember(member),
       },
       suggestedFormIds: followIds,
       onSelect: (form, result) {
@@ -818,20 +885,49 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
     if (!_isIndividualFlow) {
       return {
         'clinical_history',
+        'clinical_history_follow_up',
         'ncd',
+        'ncd_follow_up',
         'anc',
+        'anc_follow_up',
         'pnc',
+        'pnc_follow_up',
         'new_born',
+        'new_born_follow_up',
         'under_5',
+        'under_5_follow_up',
       };
     }
     if (_entryPlace == 'School' || _entryPlace == 'Anganwadi') {
-      return {'clinical_history', 'under_5'};
+      return {
+        'clinical_history',
+        'clinical_history_follow_up',
+        'under_5',
+        'under_5_follow_up',
+      };
     }
     if (_entryPlace == 'Workplace') {
-      return {'clinical_history', 'ncd'};
+      return {
+        'clinical_history',
+        'clinical_history_follow_up',
+        'ncd',
+        'ncd_follow_up',
+      };
     }
-    return {'clinical_history', 'ncd', 'anc', 'pnc', 'new_born', 'under_5'};
+    return {
+      'clinical_history',
+      'clinical_history_follow_up',
+      'ncd',
+      'ncd_follow_up',
+      'anc',
+      'anc_follow_up',
+      'pnc',
+      'pnc_follow_up',
+      'new_born',
+      'new_born_follow_up',
+      'under_5',
+      'under_5_follow_up',
+    };
   }
 
   void _disposeControllersAfterTransition(
@@ -1942,6 +2038,7 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                 'ancBaseline': member['ancBaseline'],
                 'previousEntries': _clinicalNcdHistoryForMember(member),
                 'sameDayForms': _sameDaySubmissionForMember(member),
+                'visitOptionsByFormId': _visitOptionsByFormIdForMember(member),
               },
             ),
           ),
@@ -1985,6 +2082,7 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
         'ancBaseline': member['ancBaseline'],
         'previousEntries': _clinicalNcdHistoryForMember(member),
         'sameDayForms': _sameDaySubmissionForMember(member),
+        'visitOptionsByFormId': _visitOptionsByFormIdForMember(member),
       },
       suggestedFormIds: suggested,
       onSelect: (form, result) {
@@ -2260,6 +2358,8 @@ class DataCollectionSectionState extends State<DataCollectionSection> {
                                                 _clinicalNcdHistoryForMember(m),
                                             'sameDayForms':
                                                 _sameDaySubmissionForMember(m),
+                                            'visitOptionsByFormId':
+                                                _visitOptionsByFormIdForMember(m),
                                           },
                                           suggestedFormIds: const [],
                                           onSelect: (form, result) {

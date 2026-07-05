@@ -30,6 +30,35 @@ android {
         versionName = flutter.versionName
     }
 
+    flavorDimensions += "caregridApp"
+    productFlavors {
+        create("doctor") {
+            dimension = "caregridApp"
+            applicationIdSuffix = ".doctor"
+            resValue("string", "app_name", "CareGrid Doctor")
+        }
+        create("patient") {
+            dimension = "caregridApp"
+            applicationIdSuffix = ".patient"
+            resValue("string", "app_name", "CareGrid Patient")
+        }
+        create("community") {
+            dimension = "caregridApp"
+            applicationIdSuffix = ".community"
+            resValue("string", "app_name", "CareGrid Community")
+        }
+        create("schools") {
+            dimension = "caregridApp"
+            applicationIdSuffix = ".schools"
+            resValue("string", "app_name", "CareGrid Schools")
+        }
+        create("occupation") {
+            dimension = "caregridApp"
+            applicationIdSuffix = ".occupation"
+            resValue("string", "app_name", "CareGrid Occupation")
+        }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.

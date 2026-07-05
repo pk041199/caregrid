@@ -234,10 +234,21 @@ class AuthService {
   Future<void> signInDemo({
     required String role,
   }) async {
-    final userId = role == 'Doctor' ? 'DEMO-DR' : 'DEMO-FIELD';
+    final normalizedRole = role.toLowerCase();
+    final isDoctor = normalizedRole.contains('doctor');
+    final isPatient = normalizedRole.contains('patient');
+    final userId = isDoctor
+        ? 'DEMO-DR'
+        : isPatient
+            ? 'DEMO-PATIENT'
+            : 'DEMO-FIELD';
     _currentSession = OrganizationUserSession(
       userId: userId,
-      fullName: role == 'Doctor' ? 'Demo Doctor' : 'Demo Field Staff',
+      fullName: isDoctor
+          ? 'Demo Doctor'
+          : isPatient
+              ? 'Demo Patient'
+              : 'Demo $role',
       role: role,
       organizationId: 'demo-org',
       organizationName: 'Demo Organization',

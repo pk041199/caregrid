@@ -1,0 +1,43 @@
+{
+  "id": "ncd_follow_up",
+  "title": "NCD Follow-up Form",
+  "version": 1,
+  "followup": {
+    "enabled": true,
+    "defaultCycleDays": 90,
+    "cycleOptionsDays": [30, 60, 90, 180]
+  },
+  "sections": [
+    {
+      "id": "visit_link",
+      "title": "1. Link to Previous Visit",
+      "fields": [
+        { "id": "linked_visit_reference", "label": "Main / Follow-up visit", "type": "select", "required": false, "options": [], "dynamicOptionsKey": "visitOptions" },
+        { "id": "visit_date", "label": "Visit Date", "type": "date", "required": true }
+      ]
+    },
+    {
+      "id": "status_update",
+      "title": "2. Status Update",
+      "fields": [
+        { "id": "symptom_change", "label": "Symptom Change", "type": "textarea", "required": false },
+        { "id": "bp", "label": "Blood Pressure", "type": "text", "required": false },
+        { "id": "blood_sugar", "label": "Blood Sugar", "type": "text", "required": false },
+        { "id": "adherence", "label": "Adherence", "type": "select", "required": false, "options": ["Good", "Partial", "Poor", "Not on treatment"] },
+        { "id": "complications", "label": "Complications / Red Flags", "type": "textarea", "required": false }
+      ]
+    },
+    {
+      "id": "follow_up_plan",
+      "title": "3. Plan",
+      "fields": [
+        { "id": "diagnosis_text", "label": "Diagnosis Update", "type": "textarea", "required": false },
+        { "id": "icd10_code", "label": "ICD-10 Code", "type": "text", "required": false },
+        { "id": "investigations", "label": "Investigations", "type": "textarea", "required": false },
+        { "id": "rx_treatment", "label": "Rx / Treatment", "type": "textarea", "required": true },
+        { "id": "follow_up_advice", "label": "Follow-up Advice", "type": "textarea", "required": false },
+        { "id": "follow_up_date", "label": "Next Follow-up Date", "type": "date", "required": false }
+      ]
+    }
+  ]
+}

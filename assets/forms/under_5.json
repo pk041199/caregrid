@@ -1,51 +1,42 @@
 {
   "id": "under_5",
-  "title": "Under-5 Assessment (Agenda-Based)",
-  "version": 2,
+  "title": "Under 5 Main Form",
+  "version": 1,
   "followup": {
     "enabled": true,
-    "defaultCycleDays": 90,
-    "cycleOptionsDays": [14, 30, 60, 90, 180]
+    "defaultCycleDays": 14,
+    "cycleOptionsDays": [7, 14, 30]
   },
   "sections": [
     {
-      "id": "visit_agenda",
-      "title": "1. Child Visit Agenda",
+      "id": "child_context",
+      "title": "1. Child Details",
       "fields": [
-        { "id": "caregiver_concern", "label": "Caregiver Main Concern", "type": "textarea", "required": false },
-        { "id": "danger_signs", "label": "Any Danger Signs", "type": "select", "required": false, "options": ["No", "Yes"] },
-        { "id": "danger_sign_notes", "label": "Danger Sign Details", "type": "textarea", "required": false }
+        { "id": "visit_date", "label": "Visit Date", "type": "date", "required": true },
+        { "id": "age_months", "label": "Age in Months", "type": "number", "required": false },
+        { "id": "presenting_complaints", "label": "Presenting Complaints", "type": "textarea", "required": false }
       ]
     },
     {
       "id": "growth_nutrition",
-      "title": "2. Growth and Nutrition",
+      "title": "2. Growth, Nutrition and Development",
       "fields": [
-        { "id": "weight_kg", "label": "Weight (kg)", "type": "number", "required": false, "validation": { "min": 2, "max": 30 } },
-        { "id": "height_cm", "label": "Height/Length (cm)", "type": "number", "required": false, "validation": { "min": 40, "max": 130 } },
-        { "id": "muac_cm", "label": "MUAC (cm)", "type": "number", "required": false, "validation": { "min": 8, "max": 20 } },
-        { "id": "feeding_pattern", "label": "Current Feeding Pattern", "type": "textarea", "required": false },
-        { "id": "nutrition_risk", "label": "Nutrition Risk", "type": "select", "required": false, "options": ["Low", "Moderate", "High"] }
+        { "id": "weight", "label": "Weight", "type": "text", "required": false },
+        { "id": "height_length", "label": "Height / Length", "type": "text", "required": false },
+        { "id": "nutrition_status", "label": "Nutrition Status", "type": "textarea", "required": false },
+        { "id": "developmental_concerns", "label": "Developmental Concerns", "type": "textarea", "required": false },
+        { "id": "immunization_status", "label": "Immunization Status", "type": "textarea", "required": false }
       ]
     },
     {
-      "id": "illness_immunization",
-      "title": "3. Illness and Immunization",
+      "id": "child_exam",
+      "title": "3. Examination and Plan",
       "fields": [
-        { "id": "fever_recent", "label": "Fever in Last 2 Weeks", "type": "select", "required": false, "options": ["Yes", "No", "Unknown"] },
-        { "id": "diarrhea_last2w", "label": "Diarrhea in Last 2 Weeks", "type": "select", "required": false, "options": ["Yes", "No", "Unknown"] },
-        { "id": "ari_last2w", "label": "ARI in Last 2 Weeks", "type": "select", "required": false, "options": ["Yes", "No", "Unknown"] },
-        { "id": "immunization_status", "label": "Immunization Status", "type": "select", "required": false, "options": ["Complete", "Partial", "Not done", "Unknown"] },
-        { "id": "vitamin_a_due", "label": "Vitamin A Due", "type": "select", "required": false, "options": ["No", "Yes", "Unknown"] }
-      ]
-    },
-    {
-      "id": "plan_followup",
-      "title": "4. Plan and Follow-up",
-      "fields": [
-        { "id": "advice_given", "label": "Advice Given to Caregiver", "type": "textarea", "required": false },
-        { "id": "referral_needed", "label": "Referral Needed", "type": "select", "required": false, "options": ["No", "Yes"] },
-        { "id": "next_visit_date", "label": "Next Visit Date", "type": "date", "required": false }
+        { "id": "danger_signs", "label": "Danger Signs", "type": "textarea", "required": false },
+        { "id": "examination", "label": "Examination", "type": "textarea", "required": false },
+        { "id": "diagnosis_text", "label": "Diagnosis", "type": "textarea", "required": false },
+        { "id": "advice", "label": "Advice", "type": "textarea", "required": false },
+        { "id": "follow_up_date", "label": "Follow-up Date", "type": "date", "required": false }
       ]
     }
   ]

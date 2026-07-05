@@ -1,0 +1,98 @@
+{
+  "id": "clinic_individual_registration",
+  "title": "Individual Registration (Clinic)",
+  "description": "Register a new individual for clinic follow-up",
+  "version": 1,
+  "workflow": {
+    "mode": "sectioned",
+    "showProgress": true,
+    "allowJumpToIncomplete": true
+  },
+  "followup": {
+    "enabled": true,
+    "defaultCycleDays": 30,
+    "cycleOptionsDays": [7, 14, 30, 60, 90]
+  },
+  "sections": [
+    {
+      "id": "beneficiary_id",
+      "title": "Beneficiary Identification",
+      "fields": [
+        {
+          "id": "abha_number",
+          "label": "ABHA Number",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "aadhaar_last_4",
+          "label": "Aadhaar (Last 4 digits)",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "mobile_number",
+          "label": "Mobile Number",
+          "type": "text",
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "personal_info",
+      "title": "Personal Information",
+      "fields": [
+        {
+          "id": "full_name",
+          "label": "Full Name",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "date_of_birth",
+          "label": "Date of Birth",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "gender",
+          "label": "Gender",
+          "type": "select",
+          "options": ["Male", "Female", "Other"],
+          "required": true
+        },
+        {
+          "id": "marital_status",
+          "label": "Marital Status",
+          "type": "select",
+          "options": ["Single", "Married", "Widowed", "Divorced"],
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "contact_info",
+      "title": "Contact Information",
+      "fields": [
+        {
+          "id": "address",
+          "label": "Address",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "id": "emergency_contact",
+          "label": "Emergency Contact Number",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "emergency_contact_name",
+          "label": "Emergency Contact Name",
+          "type": "text",
+          "required": false
+        }
+      ]
+    }
+  ]
+}

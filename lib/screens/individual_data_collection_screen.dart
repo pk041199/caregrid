@@ -61,11 +61,17 @@ class IndividualDataCollectionSectionState
 
   static const Map<String, String> _formIdToAsset = {
     'clinical_history': 'assets/forms/clinical_history.json',
+    'clinical_history_follow_up': 'assets/forms/clinical_history_follow_up.json',
     'ncd': 'assets/forms/ncd.json',
+    'ncd_follow_up': 'assets/forms/ncd_follow_up.json',
     'anc': 'assets/forms/anc.json',
+    'anc_follow_up': 'assets/forms/anc_follow_up.json',
     'pnc': 'assets/forms/pnc.json',
+    'pnc_follow_up': 'assets/forms/pnc_follow_up.json',
     'new_born': 'assets/forms/new_born.json',
+    'new_born_follow_up': 'assets/forms/new_born_follow_up.json',
     'under_5': 'assets/forms/under_5.json',
+    'under_5_follow_up': 'assets/forms/under_5_follow_up.json',
   };
 
   bool get isUploading => _isUploading;
@@ -169,32 +175,58 @@ class IndividualDataCollectionSectionState
     final place = (widget.setupData['entryPlace'] ?? '').trim();
     final allowed = <String>{
       'clinical_history',
+      'clinical_history_follow_up',
       'ncd',
+      'ncd_follow_up',
       'anc',
+      'anc_follow_up',
       'pnc',
+      'pnc_follow_up',
       'new_born',
+      'new_born_follow_up',
       'under_5',
+      'under_5_follow_up',
     };
 
     if (age < 10) {
       allowed.removeAll({
         'anc',
+        'anc_follow_up',
         'pnc',
+        'pnc_follow_up',
         'ncd',
+        'ncd_follow_up',
       });
     }
     if (sex != 'female') {
-      allowed.removeAll({'anc', 'pnc', 'new_born'});
+      allowed.removeAll({'anc', 'anc_follow_up', 'pnc', 'pnc_follow_up', 'new_born', 'new_born_follow_up'});
     } else {
-      if (pregnancy != 'pregnant') allowed.remove('anc');
-      if (pregnancy != 'pregnant') allowed.remove('new_born');
-      if (pregnancy != 'postpartum') allowed.remove('pnc');
+      if (pregnancy != 'pregnant') {
+        allowed.remove('anc');
+        allowed.remove('anc_follow_up');
+        allowed.remove('new_born');
+        allowed.remove('new_born_follow_up');
+      }
+      if (pregnancy != 'postpartum') {
+        allowed.remove('pnc');
+        allowed.remove('pnc_follow_up');
+      }
     }
 
     if (place == 'School' || place == 'Anganwadi') {
-      allowed.retainAll({'clinical_history', 'under_5'});
+      allowed.retainAll({
+        'clinical_history',
+        'clinical_history_follow_up',
+        'under_5',
+        'under_5_follow_up',
+      });
     } else if (place == 'Workplace') {
-      allowed.retainAll({'clinical_history', 'ncd'});
+      allowed.retainAll({
+        'clinical_history',
+        'clinical_history_follow_up',
+        'ncd',
+        'ncd_follow_up',
+      });
     }
 
     return _formIdToAsset.entries
@@ -222,6 +254,52 @@ class IndividualDataCollectionSectionState
       }
     }
     return '';
+  }
+
+  static const Map<String, List<String>> _visitFamilies = {
+    'clinical_history': ['clinical_history', 'clinical_history_follow_up'],
+    'clinical_history_follow_up': ['clinical_history', 'clinical_history_follow_up'],
+    'ncd': ['ncd', 'ncd_follow_up'],
+    'ncd_follow_up': ['ncd', 'ncd_follow_up'],
+    'anc': ['anc', 'anc_follow_up'],
+    'anc_follow_up': ['anc', 'anc_follow_up'],
+    'pnc': ['pnc', 'pnc_follow_up'],
+    'pnc_follow_up': ['pnc', 'pnc_follow_up'],
+    'new_born': ['new_born', 'new_born_follow_up'],
+    'new_born_follow_up': ['new_born', 'new_born_follow_up'],
+    'under_5': ['under_5', 'under_5_follow_up'],
+    'under_5_follow_up': ['under_5', 'under_5_follow_up'],
+  };
+
+  Map<String, List<String>> _visitOptionsByFormIdForEntry(
+    Map<String, String> entry,
+  ) {
+    final raw = (entry['formSubmissionLog'] ?? '').trim();
+    if (raw.isEmpty) return const {};
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return const {};
+      final log = decoded
+          .whereType<Map>()
+          .map((e) => e.map((k, v) => MapEntry(k.toString(), v)))
+          .toList();
+      final result = <String, List<String>>{};
+      for (final family in _visitFamilies.entries) {
+        result[family.key] = log.where((item) {
+          final formId = (item['formId'] ?? '').toString();
+          return family.value.contains(formId);
+        }).map((item) {
+          final title = (item['formTitle'] ?? item['formId'] ?? '').toString();
+          final submitted = (item['submittedAt'] ?? '').toString().split('T').first;
+          final followUpDate = (item['followUpDate'] ?? '').toString();
+          final suffix = followUpDate.isEmpty ? '' : ' | follow-up $followUpDate';
+          return '$title | visit $submitted$suffix';
+        }).toList();
+      }
+      return result;
+    } catch (_) {
+      return const {};
+    }
   }
 
   void _addRevisitEntry({
@@ -305,6 +383,7 @@ class IndividualDataCollectionSectionState
           contextData: {
             'ancHistory': entry['ancHistory'],
             'ancBaseline': entry['ancBaseline'],
+            'visitOptionsByFormId': _visitOptionsByFormIdForEntry(entry),
           },
         ),
       ),
@@ -644,6 +723,20 @@ class IndividualDataCollectionSectionState
   }) {
     final formId = (result?['formId'] ?? form['id'] ?? '').toString();
     if (formId.isEmpty) return;
+    if (result != null) {
+      final log = <dynamic>[];
+      final rawLog = (entry['formSubmissionLog'] ?? '').trim();
+      if (rawLog.isNotEmpty) {
+        try {
+          final decoded = jsonDecode(rawLog);
+          if (decoded is List) log.addAll(decoded);
+        } catch (_) {}
+      }
+      final saved = Map<String, dynamic>.from(result);
+      saved['submittedAt'] ??= DateTime.now().toIso8601String();
+      log.add(saved);
+      entry['formSubmissionLog'] = jsonEncode(log);
+    }
     if (formId == 'ncd') entry['ncdActive'] = 'true';
     if (formId == 'anc' && result != null) {
       final history = <dynamic>[];
@@ -729,6 +822,8 @@ class IndividualDataCollectionSectionState
                                   contextData: {
                                     'ancHistory': e['ancHistory'],
                                     'ancBaseline': e['ancBaseline'],
+                                    'visitOptionsByFormId':
+                                        _visitOptionsByFormIdForEntry(e),
                                   },
                                   onSelect: (form, result) {
                                     _handleFormResult(

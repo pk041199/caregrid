@@ -1,49 +1,42 @@
 {
   "id": "new_born",
-  "title": "New Born Visit",
+  "title": "New Born Main Form",
   "version": 1,
   "followup": {
     "enabled": true,
     "defaultCycleDays": 7,
-    "cycleOptionsDays": [2, 7, 14, 28]
+    "cycleOptionsDays": [3, 7, 14, 28]
   },
   "sections": [
     {
-      "id": "mcp_reference",
-      "title": "MCP Card Reference",
+      "id": "birth_details",
+      "title": "1. Birth Details",
       "fields": [
-        { "id": "mcp_card_available", "label": "MCP Card Available", "type": "select", "required": true, "options": ["Yes", "No"] },
-        { "id": "mcp_card_number", "label": "MCP Card Number", "type": "text", "required": false },
-        { "id": "mcp_last_updated_on", "label": "Last MCP Entry Date", "type": "date", "required": false }
+        { "id": "visit_date", "label": "Visit Date", "type": "date", "required": true },
+        { "id": "date_of_birth", "label": "Date of Birth", "type": "date", "required": false },
+        { "id": "birth_weight", "label": "Birth Weight", "type": "text", "required": false },
+        { "id": "gestation", "label": "Gestation", "type": "text", "required": false }
       ]
     },
     {
-      "id": "newborn_profile",
-      "title": "New Born Profile",
+      "id": "newborn_status",
+      "title": "2. New Born Status",
       "fields": [
-        { "id": "baby_name", "label": "Baby Name", "type": "text", "required": true },
-        { "id": "dob", "label": "Date of Birth", "type": "date", "required": true },
-        { "id": "birth_weight", "label": "Birth Weight (kg)", "type": "number", "required": true },
-        { "id": "delivery_place", "label": "Delivery Place", "type": "text", "required": false }
+        { "id": "feeding_status", "label": "Feeding Status", "type": "textarea", "required": false },
+        { "id": "crying_activity", "label": "Crying / Activity", "type": "textarea", "required": false },
+        { "id": "temperature", "label": "Temperature", "type": "text", "required": false },
+        { "id": "jaundice", "label": "Jaundice", "type": "select", "required": false, "options": ["No", "Yes"] },
+        { "id": "danger_signs", "label": "Danger Signs", "type": "textarea", "required": false }
       ]
     },
     {
-      "id": "newborn_exam",
-      "title": "Assessment",
+      "id": "newborn_plan",
+      "title": "3. Examination and Advice",
       "fields": [
-        { "id": "feeding", "label": "Feeding Well", "type": "select", "options": ["Yes", "No"], "required": true },
-        { "id": "urine_output", "label": "Urine Passed", "type": "select", "options": ["Yes", "No"], "required": false },
-        { "id": "stool_output", "label": "Stool Passed", "type": "select", "options": ["Yes", "No"], "required": false },
-        { "id": "jaundice", "label": "Jaundice", "type": "select", "options": ["Yes", "No"], "required": false },
-        { "id": "danger_signs", "label": "Danger Signs", "type": "text", "required": false }
-      ]
-    },
-    {
-      "id": "follow_up",
-      "title": "Follow Up",
-      "fields": [
-        { "id": "next_visit_date", "label": "Next Visit Date", "type": "date", "required": true },
-        { "id": "remarks", "label": "Remarks", "type": "text", "required": false }
+        { "id": "examination", "label": "Examination", "type": "textarea", "required": false },
+        { "id": "immunization", "label": "Immunization Given", "type": "textarea", "required": false },
+        { "id": "advice", "label": "Advice", "type": "textarea", "required": false },
+        { "id": "follow_up_date", "label": "Follow-up Date", "type": "date", "required": false }
       ]
     }
   ]

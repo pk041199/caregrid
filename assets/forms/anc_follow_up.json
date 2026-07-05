@@ -1,0 +1,41 @@
+{
+  "id": "anc_follow_up",
+  "title": "ANC Follow-up Form",
+  "version": 1,
+  "followup": {
+    "enabled": true,
+    "defaultCycleDays": 30,
+    "cycleOptionsDays": [14, 30, 60]
+  },
+  "sections": [
+    {
+      "id": "visit_link",
+      "title": "1. Link to Previous Visit",
+      "fields": [
+        { "id": "linked_visit_reference", "label": "Main / Follow-up visit", "type": "select", "required": false, "options": [], "dynamicOptionsKey": "visitOptions" },
+        { "id": "visit_date", "label": "Visit Date", "type": "date", "required": true }
+      ]
+    },
+    {
+      "id": "anc_follow_up_status",
+      "title": "2. Maternal Status",
+      "fields": [
+        { "id": "complaints", "label": "Current Complaints", "type": "textarea", "required": false },
+        { "id": "danger_signs", "label": "Danger Signs", "type": "textarea", "required": false },
+        { "id": "bp", "label": "Blood Pressure", "type": "text", "required": false },
+        { "id": "weight_kg", "label": "Weight (kg)", "type": "number", "required": false },
+        { "id": "fetal_movements", "label": "Fetal Movements", "type": "select", "required": false, "options": ["Present", "Reduced", "Absent", "Not Assessed"] }
+      ]
+    },
+    {
+      "id": "anc_follow_up_plan",
+      "title": "3. Advice and Follow-up",
+      "fields": [
+        { "id": "investigations", "label": "Investigations", "type": "textarea", "required": false },
+        { "id": "supplements", "label": "Supplements / Medicines", "type": "textarea", "required": false },
+        { "id": "counselling", "label": "Counselling / Advice", "type": "textarea", "required": false },
+        { "id": "follow_up_date", "label": "Next Follow-up Date", "type": "date", "required": false }
+      ]
+    }
+  ]
+}

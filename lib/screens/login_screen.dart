@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import '../app/app_mode.dart';
 import '../controllers/auth_controller.dart';
 import '../services/auth_service.dart';
 import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({
+    super.key,
+    required this.appMode,
+  });
+
+  final CareGridAppMode appMode;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -26,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          MaterialPageRoute(builder: (_) => HomeScreen(appMode: widget.appMode)),
         );
       });
     }
@@ -42,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
     if (success && mounted) {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        MaterialPageRoute(builder: (_) => HomeScreen(appMode: widget.appMode)),
       );
     }
   }
@@ -170,7 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('CareGrid Login'),
+        title: Text('${widget.appMode.title} Login'),
         centerTitle: true,
       ),
       body: Padding(
@@ -192,10 +198,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                   const Text(
-                    'CareGrid - Public Health Information System',
+                    'CareGrid',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
+                  Text(widget.appMode.title),
                   const SizedBox(height: 30),
                   DropdownButtonFormField<String>(
                     initialValue: _selectedOrganizationId,
@@ -282,38 +289,22 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: const Text('Login'),
                         ),
                         const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 8,
-                          children: [
-                            OutlinedButton(
-                              onPressed: () async {
-                                await _authController.signInDemo('Doctor');
-                                if (!mounted) return;
-                                Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(
-                                    builder: (_) => const HomeScreen(),
-                                  ),
-                                );
-                              },
-                              child: const Text('Demo Doctor'),
-                            ),
-                            OutlinedButton(
-                              onPressed: () async {
-                                await _authController.signInDemo('Field Staff');
-                                if (!mounted) return;
-                                Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(
-                                    builder: (_) => const HomeScreen(),
-                                  ),
-                                );
-                              },
-                              child: const Text('Demo Field Staff'),
-                            ),
-                          ],
-                        ),
                         TextButton(
                           onPressed: _showForgotPasswordDialog,
                           child: const Text('Forgot Password'),
+                        ),
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: () async {
+                            await _authController.signInDemo(widget.appMode.demoRole);
+                            if (!mounted) return;
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (_) => HomeScreen(appMode: widget.appMode),
+                              ),
+                            );
+                          },
+                          child: const Text('Demo Login'),
                         ),
                           ],
                         ),

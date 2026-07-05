@@ -1,0 +1,39 @@
+{
+  "id": "new_born_follow_up",
+  "title": "New Born Follow-up Form",
+  "version": 1,
+  "followup": {
+    "enabled": true,
+    "defaultCycleDays": 7,
+    "cycleOptionsDays": [3, 7, 14, 28]
+  },
+  "sections": [
+    {
+      "id": "visit_link",
+      "title": "1. Link to Previous Visit",
+      "fields": [
+        { "id": "linked_visit_reference", "label": "Main / Follow-up visit", "type": "select", "required": false, "options": [], "dynamicOptionsKey": "visitOptions" },
+        { "id": "visit_date", "label": "Visit Date", "type": "date", "required": true }
+      ]
+    },
+    {
+      "id": "newborn_update",
+      "title": "2. New Born Update",
+      "fields": [
+        { "id": "feeding_status", "label": "Feeding Status", "type": "textarea", "required": false },
+        { "id": "weight_gain", "label": "Weight / Gain", "type": "text", "required": false },
+        { "id": "jaundice", "label": "Jaundice", "type": "select", "required": false, "options": ["No", "Yes"] },
+        { "id": "danger_signs", "label": "Danger Signs", "type": "textarea", "required": false }
+      ]
+    },
+    {
+      "id": "newborn_plan",
+      "title": "3. Advice and Follow-up",
+      "fields": [
+        { "id": "immunization", "label": "Immunization / Medicines", "type": "textarea", "required": false },
+        { "id": "advice", "label": "Advice", "type": "textarea", "required": false },
+        { "id": "follow_up_date", "label": "Next Follow-up Date", "type": "date", "required": false }
+      ]
+    }
+  ]
+}

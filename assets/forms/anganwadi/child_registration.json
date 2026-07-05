@@ -1,0 +1,124 @@
+{
+  "id": "anganwadi_child_registration",
+  "title": "Child Registration (Anganwadi)",
+  "description": "Register a child beneficiary at Anganwadi",
+  "version": 1,
+  "workflow": {
+    "mode": "sectioned",
+    "showProgress": true,
+    "allowJumpToIncomplete": true
+  },
+  "followup": {
+    "enabled": true,
+    "defaultCycleDays": 30,
+    "cycleOptionsDays": [7, 14, 30, 60]
+  },
+  "sections": [
+    {
+      "id": "child_info",
+      "title": "Child Information",
+      "fields": [
+        {
+          "id": "full_name",
+          "label": "Child Name",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "date_of_birth",
+          "label": "Date of Birth",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "gender",
+          "label": "Gender",
+          "type": "select",
+          "options": ["Male", "Female"],
+          "required": true
+        },
+        {
+          "id": "parent_name",
+          "label": "Parent/Guardian Name",
+          "type": "text",
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "nutrition_status",
+      "title": "Nutrition Assessment",
+      "fields": [
+        {
+          "id": "height",
+          "label": "Height (cm)",
+          "type": "number",
+          "required": false
+        },
+        {
+          "id": "weight",
+          "label": "Weight (kg)",
+          "type": "number",
+          "required": false
+        },
+        {
+          "id": "muac",
+          "label": "MUAC (cm)",
+          "type": "number",
+          "required": false,
+          "placeholder": "Mid-Upper Arm Circumference"
+        },
+        {
+          "id": "nutrition_status",
+          "label": "Nutrition Status",
+          "type": "select",
+          "options": ["Normal", "Mild Acute Malnutrition", "Moderate Acute Malnutrition", "Severe Acute Malnutrition"],
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "immunization",
+      "title": "Immunization Status",
+      "fields": [
+        {
+          "id": "bcg",
+          "label": "BCG",
+          "type": "select",
+          "options": ["Done", "Pending", "Not Applicable"],
+          "required": false
+        },
+        {
+          "id": "polio",
+          "label": "Polio Doses",
+          "type": "number",
+          "required": false
+        },
+        {
+          "id": "dpt",
+          "label": "DPT Doses",
+          "type": "number",
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "beneficiary_id",
+      "title": "Beneficiary Identification",
+      "fields": [
+        {
+          "id": "abha_number",
+          "label": "ABHA Number (Optional)",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "aadhaar_last_4",
+          "label": "Aadhaar (Last 4 digits)",
+          "type": "text",
+          "required": false
+        }
+      ]
+    }
+  ]
+}

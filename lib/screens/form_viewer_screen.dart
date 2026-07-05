@@ -188,6 +188,7 @@ class _FormViewerScreenState extends State<FormViewerScreen> {
       if (data is! Map<String, dynamic>) {
         throw Exception('Invalid form JSON');
       }
+      _injectDynamicOptions(data);
       _form = data;
       if (_isMachineConnect) {
         _ecgSub = _deviceService.readings(DeviceType.ecg).listen((r) {
@@ -232,6 +233,34 @@ class _FormViewerScreenState extends State<FormViewerScreen> {
         _error = e.toString();
         _loading = false;
       });
+    }
+  }
+
+  void _injectDynamicOptions(Map<String, dynamic> form) {
+    final sections = form['sections'];
+    if (sections is! List) return;
+    final visitOptionsByFormId =
+        widget.contextData?['visitOptionsByFormId'] as Map<dynamic, dynamic>?;
+    final currentFormId = (form['id'] ?? '').toString();
+    final dynamicOptions = (visitOptionsByFormId?[currentFormId] as List<dynamic>? ?? const [])
+        .map((e) => e.toString())
+        .where((e) => e.trim().isNotEmpty)
+        .toList();
+
+    for (final rawSection in sections) {
+      if (rawSection is! Map) continue;
+      final fields = rawSection['fields'];
+      if (fields is! List) continue;
+      for (final rawField in fields) {
+        if (rawField is! Map) continue;
+        final field = rawField;
+        final key = (field['dynamicOptionsKey'] ?? '').toString();
+        if (key == 'visitOptions') {
+          field['options'] = dynamicOptions.isEmpty
+              ? ['No previous visit available']
+              : dynamicOptions;
+        }
+      }
     }
   }
 

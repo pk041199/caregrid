@@ -1,7 +1,7 @@
 {
   "id": "anc",
-  "title": "Antenatal Care (ANC) Agenda-Based Visit",
-  "version": 2,
+  "title": "ANC Main Form",
+  "version": 1,
   "followup": {
     "enabled": true,
     "defaultCycleDays": 30,
@@ -9,87 +9,46 @@
   },
   "sections": [
     {
-      "id": "mcp_reference",
-      "title": "0. MCP Card Reference",
-      "showForVisitType": ["First", "Follow-up"],
+      "id": "anc_booking",
+      "title": "1. Booking and Obstetric History",
       "fields": [
-        { "id": "mcp_card_available", "label": "MCP Card Available", "type": "select", "required": true, "options": ["Yes", "No"] },
-        { "id": "mcp_card_number", "label": "MCP Card Number", "type": "text", "required": false },
-        { "id": "mcp_last_updated_on", "label": "Last MCP Entry Date", "type": "date", "required": false }
-      ]
-    },
-    {
-      "id": "visit_context",
-      "title": "1. Visit Context",
-      "showForVisitType": ["First", "Follow-up"],
-      "fields": [
-        { "id": "visit_type", "label": "Visit Type", "type": "select", "required": true, "options": ["First", "Follow-up"] },
-        { "id": "picme_number", "label": "PICME Number", "type": "text", "required": true },
-        { "id": "anc_visits_total", "label": "Total ANC Visits Till Date", "type": "number", "required": true }
-      ]
-    },
-    {
-      "id": "obstetric_baseline",
-      "title": "2. Obstetric Baseline",
-      "showForVisitType": ["First"],
-      "fields": [
-        { "id": "lmp", "label": "LMP", "type": "date", "required": true },
+        { "id": "visit_date", "label": "Visit Date", "type": "date", "required": true },
+        { "id": "lmp", "label": "LMP", "type": "date", "required": false },
         { "id": "edd", "label": "EDD", "type": "date", "required": false },
-        { "id": "gestational_age_weeks", "label": "Gestational Age (weeks)", "type": "number", "required": true },
-        { "id": "trimester", "label": "Trimester", "type": "select", "required": false, "options": ["I", "II", "III"] },
-        { "id": "gpla", "label": "GPLA", "type": "text", "required": false },
-        { "id": "high_risk_baseline", "label": "Baseline High Risk", "type": "select", "required": false, "options": ["No", "Yes"] },
-        { "id": "high_risk_details", "label": "High Risk Details", "type": "textarea", "required": false }
+        { "id": "gestational_age_weeks", "label": "Gestational Age (weeks)", "type": "number", "required": false },
+        { "id": "gravida_para", "label": "Gravida / Para / Living", "type": "text", "required": false },
+        { "id": "high_risk_pregnancy", "label": "High Risk Pregnancy", "type": "select", "required": false, "options": ["No", "Yes"] }
       ]
     },
     {
-      "id": "current_history",
-      "title": "3. Current History and Complaints",
-      "showForVisitType": ["Follow-up"],
+      "id": "anc_history",
+      "title": "2. Complaints and History",
       "fields": [
-        { "id": "presenting_complaints", "label": "Presenting Complaints", "type": "textarea", "required": true },
-        { "id": "danger_signs", "label": "Any Danger Signs", "type": "select", "required": false, "options": ["No", "Yes"] },
-        { "id": "danger_sign_notes", "label": "Danger Sign Notes", "type": "textarea", "required": false }
+        { "id": "complaints", "label": "Complaints", "type": "textarea", "required": false },
+        { "id": "danger_signs", "label": "Danger Signs", "type": "textarea", "required": false },
+        { "id": "past_obstetric_history", "label": "Past Obstetric History", "type": "textarea", "required": false }
       ]
     },
     {
-      "id": "exam",
-      "title": "4. Clinical Examination",
-      "showForVisitType": ["First", "Follow-up"],
+      "id": "anc_exam",
+      "title": "3. Examination and Investigations",
       "fields": [
-        { "id": "height_cm", "label": "Height (cm)", "type": "number", "required": false, "validation": { "min": 100, "max": 220 } },
-        { "id": "weight_kg", "label": "Weight (kg)", "type": "number", "required": true, "validation": { "min": 25, "max": 180 } },
-        { "id": "bp", "label": "Blood Pressure", "type": "text", "required": true },
-        { "id": "pulse", "label": "Pulse/min", "type": "number", "required": false, "validation": { "min": 30, "max": 220 } },
+        { "id": "weight_kg", "label": "Weight (kg)", "type": "number", "required": false },
+        { "id": "bp", "label": "Blood Pressure", "type": "text", "required": false },
         { "id": "pallor", "label": "Pallor", "type": "select", "required": false, "options": ["No", "Yes"] },
         { "id": "pedal_edema", "label": "Pedal Edema", "type": "select", "required": false, "options": ["No", "Yes"] },
-        { "id": "fundal_height_cm", "label": "Fundal Height (cm)", "type": "number", "required": false },
-        { "id": "fhs_status", "label": "FHS", "type": "select", "required": false, "options": ["Heard", "Not heard", "Not assessed"] },
-        { "id": "fetal_movements", "label": "Fetal Movements", "type": "select", "required": false, "options": ["Present", "Reduced", "Absent", "Not assessed"] }
+        { "id": "fetal_heart_sound", "label": "Fetal Heart Sound", "type": "text", "required": false },
+        { "id": "investigations", "label": "Investigations", "type": "textarea", "required": false }
       ]
     },
     {
-      "id": "investigation_plan",
-      "title": "5. Investigations and Supplements",
-      "showForVisitType": ["First", "Follow-up"],
+      "id": "anc_plan",
+      "title": "4. Advice and Follow-up",
       "fields": [
-        { "id": "hb", "label": "Hb (g/dL)", "type": "number", "required": true },
-        { "id": "urine_albumin_sugar", "label": "Urine Albumin/Sugar", "type": "text", "required": false },
-        { "id": "blood_sugar", "label": "Blood Sugar", "type": "text", "required": false },
-        { "id": "scan_summary", "label": "Scan Summary", "type": "textarea", "required": false },
-        { "id": "ifa_given", "label": "IFA Given", "type": "select", "required": false, "options": ["Yes", "No"] },
-        { "id": "calcium_given", "label": "Calcium Given", "type": "select", "required": false, "options": ["Yes", "No"] },
-        { "id": "td_status", "label": "Td/TT Status", "type": "text", "required": false }
-      ]
-    },
-    {
-      "id": "plan_followup",
-      "title": "6. Plan and Follow-up",
-      "showForVisitType": ["First", "Follow-up"],
-      "fields": [
-        { "id": "counseling", "label": "Counseling and Birth Preparedness", "type": "textarea", "required": false },
-        { "id": "referral_needed", "label": "Referral Needed", "type": "select", "required": false, "options": ["No", "Yes"] },
-        { "id": "next_visit_date", "label": "Next Visit Date", "type": "date", "required": true }
+        { "id": "supplements", "label": "Supplements Given", "type": "textarea", "required": false },
+        { "id": "counselling", "label": "Counselling / Advice", "type": "textarea", "required": false },
+        { "id": "diagnosis_text", "label": "Diagnosis / Risk Summary", "type": "textarea", "required": false },
+        { "id": "follow_up_date", "label": "Follow-up Date", "type": "date", "required": false }
       ]
     }
   ]

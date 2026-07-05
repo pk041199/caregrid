@@ -1,0 +1,69 @@
+{
+  "id": "clinical_history_follow_up",
+  "title": "Clinical History Follow-up",
+  "version": 1,
+  "followup": {
+    "enabled": true,
+    "defaultCycleDays": 30,
+    "cycleOptionsDays": [7, 14, 30, 60, 90]
+  },
+  "sections": [
+    {
+      "id": "visit_link",
+      "title": "1. Link to Previous Visit",
+      "fields": [
+        { "id": "linked_visit_reference", "label": "Main / Follow-up visit", "type": "select", "required": false, "options": [], "dynamicOptionsKey": "visitOptions" },
+        { "id": "follow_up_visit_date", "label": "Follow-up Visit Date", "type": "date", "required": true }
+      ]
+    },
+    {
+      "id": "follow_up_history",
+      "title": "2. Follow-up History",
+      "fields": [
+        {
+          "id": "follow_up_items",
+          "label": "Complaints update - add one by one",
+          "type": "repeatable_group",
+          "required": false,
+          "itemFields": [
+            { "id": "complaint", "label": "Complaint", "type": "text" },
+            { "id": "history", "label": "Update in History", "type": "textarea" },
+            { "id": "duration", "label": "Duration", "type": "text" },
+            { "id": "frequency", "label": "Frequency", "type": "text" },
+            { "id": "associated_symptoms", "label": "Associated Symptoms", "type": "textarea" }
+          ]
+        },
+        { "id": "response_to_treatment", "label": "Response to Previous Treatment", "type": "textarea", "required": false }
+      ]
+    },
+    {
+      "id": "follow_up_exam",
+      "title": "3. Examination Update",
+      "fields": [
+        { "id": "general_examination_update", "label": "General Examination Update", "type": "textarea", "required": false },
+        {
+          "id": "system_wise_examination_update",
+          "label": "System wise examination update",
+          "type": "repeatable_group",
+          "required": false,
+          "itemFields": [
+            { "id": "system", "label": "System", "type": "select", "options": ["CVS", "RS", "CNS", "PA", "ENT", "Skin", "Musculoskeletal", "Obstetric", "Other"] },
+            { "id": "findings", "label": "Findings", "type": "textarea" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "follow_up_plan",
+      "title": "4. Assessment and Follow-up Plan",
+      "fields": [
+        { "id": "diagnosis_text", "label": "Diagnosis", "type": "textarea", "required": true },
+        { "id": "icd10_code", "label": "ICD-10 Code", "type": "text", "required": false },
+        { "id": "investigations", "label": "Investigations", "type": "textarea", "required": false },
+        { "id": "rx_treatment", "label": "Rx / Treatment", "type": "textarea", "required": true },
+        { "id": "follow_up_date", "label": "Next Follow-up Date", "type": "date", "required": false },
+        { "id": "follow_up_advice", "label": "Follow-up Advice", "type": "textarea", "required": false }
+      ]
+    }
+  ]
+}

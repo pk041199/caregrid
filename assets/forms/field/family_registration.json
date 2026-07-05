@@ -1,0 +1,106 @@
+{
+  "id": "field_family_registration",
+  "title": "Family Registration",
+  "description": "Register a new family in the HDSS survey",
+  "version": 1,
+  "workflow": {
+    "mode": "sectioned",
+    "showProgress": true,
+    "allowJumpToIncomplete": true
+  },
+  "followup": {
+    "enabled": true,
+    "defaultCycleDays": 365,
+    "cycleOptionsDays": [30, 90, 180, 365]
+  },
+  "sections": [
+    {
+      "id": "family_info",
+      "title": "Family Information",
+      "fields": [
+        {
+          "id": "family_head_name",
+          "label": "Family Head Name",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "family_address",
+          "label": "Address",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "id": "contact_number",
+          "label": "Contact Number",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "house_type",
+          "label": "Type of House",
+          "type": "select",
+          "options": ["Pucca", "Semi-pucca", "Kaccha"],
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "household_details",
+      "title": "Household Details",
+      "fields": [
+        {
+          "id": "number_of_members",
+          "label": "Total Family Members",
+          "type": "number",
+          "required": true
+        },
+        {
+          "id": "number_of_children",
+          "label": "Children (0-18 years)",
+          "type": "number",
+          "required": false
+        },
+        {
+          "id": "water_source",
+          "label": "Drinking Water Source",
+          "type": "select",
+          "options": ["Tap", "Well", "Bore", "Tanker", "Other"],
+          "required": false
+        },
+        {
+          "id": "sanitation",
+          "label": "Type of Toilet",
+          "type": "select",
+          "options": ["Flush", "Pit", "Open", "Other"],
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "beneficiary_ids",
+      "title": "Beneficiary Identification",
+      "fields": [
+        {
+          "id": "abha_number",
+          "label": "ABHA Number (Optional)",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "aadhaar_last_4",
+          "label": "Aadhaar (Last 4 digits)",
+          "type": "text",
+          "required": false,
+          "placeholder": "Enter last 4 digits only"
+        },
+        {
+          "id": "mobile_number",
+          "label": "Mobile Number",
+          "type": "text",
+          "required": false
+        }
+      ]
+    }
+  ]
+}
